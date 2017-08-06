@@ -187,7 +187,7 @@ public class VarvizConfigurationDelegate extends AbstractJavaLaunchConfiguration
 			FeatureExpr ctx = edge.getCtx();
 			String ctxString = Conditional.getCTXString(ctx);				
 			
-			if (!expressions.contains(ctx) && ctxString != "True") {
+			if (!expressions.contains(ctx) && !ctx.isTautology()) {
 				expressions.add(ctx);
 				System.out.println(ctx);
 			} 

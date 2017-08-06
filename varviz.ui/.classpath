@@ -19,6 +19,9 @@
 	<classpathentry kind="lib" path="lib/RunTest.jar"/>
 	<classpathentry kind="lib" path="lib/scala-library-2.11.8.jar"/>
 	<classpathentry kind="lib" path="lib/varviz.jar" sourcepath="/varviz.core"/>
+	<classpathentry kind="lib" path="lib/batik-all-1.7.jar"/>
+	<classpathentry kind="lib" path="lib/xml-apis-ext.jar"/>
+	<classpathentry kind="lib" path="lib/jdot-1.1-SNAPSHOT.jar"/>
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>

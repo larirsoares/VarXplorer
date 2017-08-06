@@ -137,7 +137,11 @@ public class InteractionFinder {
 		}
 				
 		//creates excel table
-		createExcelTable(hashMap, features);
+		//createExcelTable(hashMap, features);
+		
+		//creates graph
+		InteractGraph g = new InteractGraph();
+		g.createGraphInter(hashMap, features);
 		
 		
 	
