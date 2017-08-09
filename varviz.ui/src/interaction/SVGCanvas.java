@@ -1,19 +1,31 @@
 package interaction;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.Toolkit;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 
 import javax.swing.JFrame;
+import javax.swing.JScrollPane;
 
 import info.leadinglight.jdot.Graph;
 import info.leadinglight.jdot.impl.Util;
+
 
 public class SVGCanvas {
 	
 	
 	public SVGCanvas (Graph g) {
+		
+		//get dimension of the screen
+		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+		int width = screenSize.width;
+		int height = screenSize.height;
+		int verticalOffset = 40;
+		int horizontalOffset = 10;
+		
 		//gera a imagem svg a partir da stream de dados
 		Util.toFile(Graph.dot2out(Graph.DEFAULT_CMD,"svg",g.toDot()), new File("graph.svg"));
 	    BufferedImage bufferedImage = null;
@@ -26,17 +38,29 @@ public class SVGCanvas {
 	    
 	    //instancia um jframe (janela)
 		JFrame svgCanvas = new JFrame();
+		JScrollPane jpane = new JScrollPane();
+		
 		
 		//ajusta dimensoes e o layout
 		svgCanvas.setVisible(true);
 		svgCanvas.setLayout(new BorderLayout());
-        svgCanvas.setSize(bufferedImage.getWidth()+10,bufferedImage.getHeight()+20);
         
+		if (width >= bufferedImage.getWidth()) {
+			svgCanvas.setSize(bufferedImage.getWidth()+horizontalOffset,bufferedImage.getHeight()+verticalOffset);
+        } else {
+        	svgCanvas.setSize(width,bufferedImage.getHeight()+verticalOffset);
+        }
+		
         //adiciona o componente ao jframe
-        svgCanvas.add(new GraphPanel(bufferedImage), BorderLayout.CENTER);
+        GraphPanel graphPanel = new GraphPanel(bufferedImage);
+        graphPanel.setPreferredSize(new Dimension(bufferedImage.getWidth(), bufferedImage.getHeight()));
+        
+        
+        jpane.setViewportView(graphPanel);
+        svgCanvas.add(jpane,BorderLayout.CENTER);      
         
 		//isso daqui é só pra fechar o frame sem fechar a aplicação
-		svgCanvas.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		svgCanvas.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		
 		//forço o método de repintar o frame
 		svgCanvas.repaint();
