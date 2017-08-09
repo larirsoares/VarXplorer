@@ -10,7 +10,7 @@ import de.fosd.typechef.featureexpr.FeatureExpr;
 import de.fosd.typechef.featureexpr.SingleFeatureExpr;
 import info.leadinglight.jdot.*;
 import info.leadinglight.jdot.enums.*;
-import interaction.InteractionFinder.PairExp;;
+import interaction.InteractionFinder.PairExp;
 
 public class InteractGraph {
 
@@ -34,34 +34,38 @@ public class InteractGraph {
 			
 			A = Conditional.getCTXString(pair.getKey().A);
 			B = Conditional.getCTXString(pair.getKey().B);
-			System.out.println("Pair = [" + A + "," + B + "= " + pair.getValue() + "]");
-			String concat = "["+B;
+		//	System.out.println("Pair = [" + A + "," + B + "= " + pair.getValue() + "]");
+			String concat = B;
 			
-			if(pair.getValue().toString().contains("not interact")){
-				continue;
-			}
-			else if(pair.getValue().toString().contains("interact")){
-				g.addEdge(
-						new Edge(A,B).setArrowHead(ArrowType.none));
-			}
-			else if(pair.getValue().toString().contains("enables")){
-				
-				if(pair.getValue().toString().startsWith(concat)){
-					g.addEdge(new Edge(B,A).setColor(Color.X11.green).setArrowHead(ArrowType.empty).setLabel("enables").setFontSize(10));
-				}else{
-					g.addEdge(new Edge(A,B).setColor(Color.X11.green).setArrowHead(ArrowType.empty).setLabel("enables").setFontSize(10));
+			List<String> l = pair.getValue();
+			for(String exp: l){
+				System.out.println("expr: " + exp);
+			
+				if(exp.contains("not interact")){
+					continue;
 				}
-			}
-			else if(pair.getValue().toString().contains("suppresses")){
-				
-				if(pair.getValue().toString().startsWith(concat)){
-					g.addEdge(new Edge(B,A).setColor(Color.X11.red).setArrowHead(ArrowType.empty).setFontSize(10).setLabel("suppresses"));
-				}else{				
-					g.addEdge(new Edge(A,B).setColor(Color.X11.red).setArrowHead(ArrowType.empty).setFontSize(10).setLabel("suppresses"));
+				else if(exp.contains("interact")){
+					g.addEdge(
+							new Edge(A,B).setArrowHead(ArrowType.none));
+				}
+				else if(exp.contains("enables")){
+					
+					if(exp.startsWith(concat)){
+						g.addEdge(new Edge(B,A).setColor(Color.X11.green).setArrowHead(ArrowType.empty).setLabel("enables").setFontSize(10));
+					}else{
+						g.addEdge(new Edge(A,B).setColor(Color.X11.green).setArrowHead(ArrowType.empty).setLabel("enables").setFontSize(10));
+					}
+				}
+				else if(exp.contains("suppresses")){
+					
+					if(exp.startsWith(concat)){
+						g.addEdge(new Edge(B,A).setColor(Color.X11.red).setArrowHead(ArrowType.empty).setFontSize(10).setLabel("suppresses"));
+					}else{				
+						g.addEdge(new Edge(A,B).setColor(Color.X11.red).setArrowHead(ArrowType.empty).setFontSize(10).setLabel("suppresses"));
+					}
 				}
 			}
 		}
-		
 		
 		String concat = "";
 		for(FeatureExpr featureexpr : expressions){
