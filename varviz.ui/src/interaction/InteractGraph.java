@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import cmu.conditional.Conditional;
+import de.fosd.typechef.featureexpr.FeatureExpr;
 import de.fosd.typechef.featureexpr.SingleFeatureExpr;
 import info.leadinglight.jdot.*;
 import info.leadinglight.jdot.enums.*;
@@ -13,7 +14,7 @@ import interaction.InteractionFinder.PairExp;;
 
 public class InteractGraph {
 
-	public void createGraphInter(Map<PairExp, List<String>> hashMap, Collection<SingleFeatureExpr> features){
+	public void createGraphInter(Map<PairExp, List<String>> hashMap, Collection<SingleFeatureExpr> features, List<SingleFeatureExpr> noEffectlist, List<FeatureExpr> expressions){
 		Graph g = new Graph("FeatureInteractions");//.setType(GraphType.graph);
 		
 		String A = "";
@@ -21,8 +22,11 @@ public class InteractGraph {
 		
 		for (SingleFeatureExpr feature1 : features) {
 			 String f = Conditional.getCTXString(feature1);
-			 System.out.println("node:" + f + "|");
-			 g.addNode(new Node(f)); 
+			 if(noEffectlist.contains(feature1)){
+			 	g.addNode(new Node(f).setStyle(Style.Node.dashed).setColor(Color.X11.grey).setFontColor(Color.X11.gray)); 
+			 }else if(!Conditional.isTautology(feature1)){
+				g.addNode(new Node(f));
+			 }
 		 }
 		
 		
@@ -59,6 +63,11 @@ public class InteractGraph {
 		}
 		
 		
+		String concat = "";
+		for(FeatureExpr featureexpr : expressions){
+			concat+= Conditional.getCTXString(featureexpr) + "\n";
+		}
+		g.setLabel(concat);
 		
 		new SVGCanvas(g);
 	}

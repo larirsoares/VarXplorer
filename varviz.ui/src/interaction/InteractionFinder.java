@@ -41,9 +41,7 @@ public class InteractionFinder {
 		List<SingleFeatureExpr> noEffectlist = new ArrayList<>();
 		Map<PairExp, List<String>> hashMap = new HashMap<>();
 		
-		List<List> lists = getExpressionsPairs(expressions);
-		exprPairs = lists.get(0);//get all the pairs in the expressions
-		List<TriExp> exprTri = lists.get(1);
+		exprPairs = getExpressionsPairs(expressions);;//get all the pairs in the expressions
 		noEffectlist = getNoEffectlist(features, expressions);//list of features that do not appear in the expressions
 		
 		for (SingleFeatureExpr feature1 : features) {
@@ -76,23 +74,24 @@ public class InteractionFinder {
 					
 				PairExp pairAB = new PairExp(feature1, feature2);
 				PairExp pairBA = new PairExp(feature2, feature1);
-				//System.out.println("Features: " + feature1 + " , " + feature2);
 				
-				//if the pair is no present in the expressions
-				if (!exprPairs.contains(pairAB) && !exprPairs.contains(pairBA) && !contain.contains(pairAB)){
-					
-					if (!noEffectlist.contains(feature1) && !noEffectlist.contains(feature2)) {				
-						phrase = "do not interact";
+				if(phrase.equals("a")){
+					//if the pair is no present in the expressions
+					if (!exprPairs.contains(pairAB) && !exprPairs.contains(pairBA) && !contain.contains(pairAB)){
+						
+						if (!noEffectlist.contains(feature1) && !noEffectlist.contains(feature2)) {				
+							phrase = "do not interact";
+						}
+						else if(noEffectlist.contains(feature1)){
+							phrase = Conditional.getCTXString(feature1) + " has no effect";
+						}
+						
+						else if(noEffectlist.contains(feature2)){
+							phrase = Conditional.getCTXString(feature2) + " has no effect";
+						}
+						contain.add(pairAB);//to avoid repeat the same pair in a different order
+						contain.add(pairBA);
 					}
-					else if(noEffectlist.contains(feature1)){
-						phrase = Conditional.getCTXString(feature1) + " has no effect";
-					}
-					
-					else if(noEffectlist.contains(feature2)){
-						phrase = Conditional.getCTXString(feature2) + " has no effect";
-					}
-					contain.add(pairAB);//to avoid repeat the same pair in a different order
-					contain.add(pairBA);
 				}
 				
 				if((!hashMap.containsKey(pairAB)) && (!hashMap.containsKey(pairBA)) && (!phrase.equals("a"))){
@@ -106,7 +105,7 @@ public class InteractionFinder {
 				}
 			}	
 		}
-		System.out.println("teste");
+		
 		//when both features of a pair have no effect
 		addDoubleNoEffect(noEffectlist, hashMap);
 		
@@ -119,59 +118,15 @@ public class InteractionFinder {
 				hashMap.get(pair).add(phrase);			
 			}
 		}
-		
-		//verify features in a tri-interaction by removing "do not interact" statement when necessary
-		for(TriExp pair: exprTri){
-			
-			SingleFeatureExpr A  = (SingleFeatureExpr) pair.A;
-			SingleFeatureExpr B  = (SingleFeatureExpr) pair.B;
-			SingleFeatureExpr C  = (SingleFeatureExpr) pair.C;
-			
-			PairExp pairAB = new PairExp(A,B);
-			PairExp pairAC = new PairExp(A,C);
-			PairExp pairBC = new PairExp(B,C);
-			
-			verifyTriInteraction(hashMap,pairAB);
-			verifyTriInteraction(hashMap,pairAC);
-			verifyTriInteraction(hashMap,pairBC);		
-		}
 				
 		//creates excel table
 		//createExcelTable(hashMap, features);
 		
 		//creates graph
-		InteractGraph g = new InteractGraph();
-		g.createGraphInter(hashMap, features);
-		
-		
+		InteractGraph g = new InteractGraph();		
+		g.createGraphInter(hashMap, features, noEffectlist, expressions);		
 	
 	}
-
-	//verify the interactions in a tri-interaction
-	private void verifyTriInteraction(Map<PairExp, List<String>> hashMap, PairExp pair) {
-			if(!hashMap.containsKey(pair)){
-				hashMap.put(pair, new ArrayList<>());
-				hashMap.get(pair).add("do interact");
-			}
-			else{
-				if(hashMap.get(pair).size() == 1 && hashMap.get(pair).get(0).equals("do not interact")){
-					hashMap.get(pair).remove(0);				
-					hashMap.get(pair).add("do interact");
-				}
-				if(hashMap.get(pair).size() > 1){
-					int s = hashMap.get(pair).size();
-					for(int i=0; i<s; i++){		
-						String p = hashMap.get(pair).get(i);
-						if(p.equals("do not interact")){
-							hashMap.get(pair).remove(i);
-							i--;
-							s--;
-						}
-					}
-				}
-			}
-			
-		}
 
 	
 	private void createExcelTable(Map<PairExp, List<String>> hashMap, Collection<SingleFeatureExpr> features) {
@@ -285,50 +240,44 @@ public class InteractionFinder {
 	}
 
 	//get all the pairs in the expressions
-	private List<List> getExpressionsPairs(List<FeatureExpr> expressions) {
+	private List<PairExp> getExpressionsPairs(List<FeatureExpr> expressions) {
 		List<PairExp> exprPairs = new ArrayList<>();
-		List<TriExp> exprTri = new ArrayList<>();
+		List<SingleFeatureExpr> flist = new ArrayList<>();
+		List<List> featuresinExpres = new ArrayList<>();
 		
 		for(FeatureExpr featureexpr : expressions){
 			
 			Set<String> dist = featureexpr.collectDistinctFeatures();
-			if(dist.size() == 2){
-				scala.collection.Iterator<String> it = dist.iterator();
-				String s = it.next().substring(7);
-				String s2 = it.next().substring(7);
-				
-				// Step 2: get features
-				SingleFeatureExpr f1  = Conditional.createFeature(s);
-				SingleFeatureExpr f2 = Conditional.createFeature(s2);
-				
-				PairExp pairAB = new PairExp(f1, f2);			
-				if (!exprPairs.contains(pairAB)){
-					exprPairs.add(pairAB);
-				}
+			
+			if(dist.size() < 2){
+				continue;
 			}
-			if(dist.size() == 3){
-				scala.collection.Iterator<String> it = dist.iterator();
-				String s = it.next().substring(7);
-				String s2 = it.next().substring(7);
-				String s3 = it.next().substring(7);
-				
-				// Step 2: get features
-				SingleFeatureExpr f1  = Conditional.createFeature(s);
-				SingleFeatureExpr f2 = Conditional.createFeature(s2);
-				SingleFeatureExpr f3 = Conditional.createFeature(s3);
-				
-				TriExp pairABC = new TriExp(f1, f2, f3);			
-				if (!exprTri.contains(pairABC)){
-					exprTri.add(pairABC);
+			
+			scala.collection.Iterator<String> fs = dist.iterator();
+			flist = new ArrayList<>();
+			for(int i=0; i<dist.size(); i++){
+				String s = fs.next().substring(7);
+				SingleFeatureExpr f  = Conditional.createFeature(s);
+				flist.add(f);
+				if((i == dist.size()-1) && !featuresinExpres.contains(flist)){
+					//if(flist.size()>2){
+						for(int j=0; j<flist.size(); j++){
+							for(int k=j+1; k<flist.size(); k++){
+								if(flist.get(j) == flist.get(k)){
+									continue;
+								}
+								PairExp pairAB = new PairExp(flist.get(j), flist.get(k));			
+								if (!exprPairs.contains(pairAB)){
+									exprPairs.add(pairAB);
+								}
+							}
+						}
+						featuresinExpres.add(flist);
 				}
 			}
 		}
-
-		List<List> lists = new ArrayList<>();
-		lists.add(exprPairs);
-		lists.add(exprTri);
 		
-		return lists;
+		return exprPairs;
 	}
 
 	class PairExp {
@@ -360,46 +309,6 @@ public class InteractionFinder {
 		@Override
 		public String toString() {
 			return Conditional.getCTXString(A) + ", " + Conditional.getCTXString(B);
-		}
-	}
-	
-	class TriExp {
-		FeatureExpr A, B, C;
-
-		public TriExp(SingleFeatureExpr a, SingleFeatureExpr b, SingleFeatureExpr c) {
-			A = a;
-			B = b;
-			C = c;
-		}
-		public FeatureExpr getA() {
-			return A;
-		}
-		public FeatureExpr getB() {
-			return B;
-		}
-		public FeatureExpr getC() {
-			return C;
-		}
-		
-		@Override
-		public boolean equals(Object obj) {
-			TriExp other =  (TriExp) obj;
-			return (A.equals(other.A) && B.equals(other.B) &&  C.equals(other.C)) ||
-					(A.equals(other.B) && B.equals(other.A) && C.equals(other.C)) ||
-					(A.equals(other.B) && B.equals(other.C) && C.equals(other.A)) ||
-					(A.equals(other.A) && B.equals(other.C) && C.equals(other.B)) ||
-					(A.equals(other.C) && B.equals(other.A) && C.equals(other.B)) ||
-					(A.equals(other.C) && B.equals(other.B) && C.equals(other.A));
-		}
-		
-		@Override
-		public int hashCode() {
-			return A.hashCode() * B.hashCode() * C.hashCode() * 31;
-		}
-		
-		@Override
-		public String toString() {
-			return Conditional.getCTXString(A) + ", " + Conditional.getCTXString(B) + ", " + Conditional.getCTXString(C);
 		}
 	}
 	
