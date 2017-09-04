@@ -33,7 +33,7 @@ public class InteractionFinder {
 		return unique;
 	}
 		
-	public void getInteractionsTable(List<FeatureExpr> expressions) {
+	public void getInteractionsTable(List<FeatureExpr> expressions, File workingDir) {
 		
 		Collection<SingleFeatureExpr> features = Conditional.features.values();//the whole set of features
 		List<PairExp> exprPairs = new ArrayList<>();//the pairs present in the expressions
@@ -69,7 +69,8 @@ public class InteractionFinder {
 				}
 				if (second.isTautology()) {
 					//System.out.println(Conditional.getCTXString(feature1) + " enables " + Conditional.getCTXString(feature2));
-					phrase = Conditional.getCTXString(feature1) + " enables " + Conditional.getCTXString(feature2);
+					phrase = Conditional.getCTXString(feature2) + " enables " + Conditional.getCTXString(feature1);
+					//phrase = Conditional.getCTXString(feature1) + " enables " + Conditional.getCTXString(feature2);
 				}			
 					
 				PairExp pairAB = new PairExp(feature1, feature2);
@@ -124,7 +125,7 @@ public class InteractionFinder {
 		
 		//creates graph
 		InteractGraph g = new InteractGraph();		
-		g.createGraphInter(hashMap, features, noEffectlist, expressions);		
+		g.createGraphInter(hashMap, features, noEffectlist, expressions, workingDir);		
 	
 	}
 
@@ -200,7 +201,7 @@ public class InteractionFinder {
 			String phrase = "a";
 			for(int i = 0; i<noEffectlist.size(); i++){
 				for(int j = i+1; j<noEffectlist.size(); j++){	
-					System.out.println("no effect list: " + "i " + i + " " + noEffectlist.get(i) + " j " + j + " " + noEffectlist.get(j));
+					//System.out.println("no effect list: " + "i " + i + " " + noEffectlist.get(i) + " j " + j + " " + noEffectlist.get(j));
 					SingleFeatureExpr noA = noEffectlist.get(i);
 					SingleFeatureExpr noB = noEffectlist.get(j);
 					PairExp pairNoEffect = new PairExp(noA, noB);

@@ -17,7 +17,7 @@ import info.leadinglight.jdot.impl.Util;
 public class SVGCanvas {
 	
 	
-	public SVGCanvas (Graph g) {
+	public SVGCanvas (Graph g, File workingDir) {
 		
 		//get dimension of the screen
 		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
@@ -27,10 +27,10 @@ public class SVGCanvas {
 		int horizontalOffset = 10;
 		
 		//gera a imagem svg a partir da stream de dados
-		Util.toFile(Graph.dot2out(Graph.DEFAULT_CMD,"svg",g.toDot()), new File("graph.svg"));
+		Util.toFile(Graph.dot2out(Graph.DEFAULT_CMD,"svg",g.toDot()), new File( workingDir.getAbsolutePath() + "/graph.svg"));
 	    BufferedImage bufferedImage = null;
 		try {
-			bufferedImage = GraphPanel.rasterize(new File("graph.svg"));
+			bufferedImage = GraphPanel.rasterize(new File(workingDir.getAbsolutePath() + "/graph.svg"));
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

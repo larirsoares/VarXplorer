@@ -1,5 +1,6 @@
 package interaction;
 
+import java.io.File;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -14,7 +15,7 @@ import interaction.InteractionFinder.PairExp;
 
 public class InteractGraph {
 
-	public void createGraphInter(Map<PairExp, List<String>> hashMap, Collection<SingleFeatureExpr> features, List<SingleFeatureExpr> noEffectlist, List<FeatureExpr> expressions){
+	public void createGraphInter(Map<PairExp, List<String>> hashMap, Collection<SingleFeatureExpr> features, List<SingleFeatureExpr> noEffectlist, List<FeatureExpr> expressions, File workingDir){
 		Graph g = new Graph("FeatureInteractions");//.setType(GraphType.graph);
 		
 		String A = "";
@@ -73,7 +74,7 @@ public class InteractGraph {
 		}
 		g.setLabel(concat);
 		
-		new SVGCanvas(g);
+		new SVGCanvas(g,workingDir);
 	}
 	
 	

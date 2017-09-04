@@ -194,7 +194,7 @@ public class VarvizConfigurationDelegate extends AbstractJavaLaunchConfiguration
 		}
 		
 		InteractionFinder finder = new InteractionFinder();
-		finder.getInteractionsTable(expressions);
+		finder.getInteractionsTable(expressions, workingDir);
 		
 //		Collection<SingleFeatureExpr> features = Conditional.features.values();//the whole set of features
 //		List<PairExp> exprPairs = new ArrayList<>();//the pairs present in the expressions
