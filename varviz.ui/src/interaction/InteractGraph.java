@@ -15,7 +15,7 @@ import interaction.InteractionFinder.PairExp;
 
 public class InteractGraph {
 
-	public void createGraphInter(Map<PairExp, List<String>> hashMap, Collection<SingleFeatureExpr> features, List<SingleFeatureExpr> noEffectlist, List<FeatureExpr> expressions, File workingDir){
+	public void createGraphInter(Map<PairExp, List<String>> hashMap, Collection<SingleFeatureExpr> features, List<SingleFeatureExpr> noEffectlist, List<FeatureExpr> expressions, File workingDir, List<List> allVars){
 		Graph g = new Graph("FeatureInteractions");//.setType(GraphType.graph);
 		
 		String A = "";
@@ -30,42 +30,169 @@ public class InteractGraph {
 			 }
 		 }
 		
-		
+		String expV = "";
 		for (Entry<PairExp, List<String>> pair : hashMap.entrySet()) {
 			
-			A = Conditional.getCTXString(pair.getKey().A);
-			B = Conditional.getCTXString(pair.getKey().B);
-		//	System.out.println("Pair = [" + A + "," + B + "= " + pair.getValue() + "]");
-			String concat = B;
+//			for(List<String> vars: allVars){
+//				expV = vars.get(0);
 			
-			List<String> l = pair.getValue();
-			for(String exp: l){
-				System.out.println("expr: " + exp);
 			
-				if(exp.contains("not interact")){
-					continue;
-				}
-				else if(exp.contains("interact")){
-					g.addEdge(
-							new Edge(A,B).setArrowHead(ArrowType.none));
-				}
-				else if(exp.contains("enables")){
-					
-					if(exp.startsWith(concat)){
-						g.addEdge(new Edge(B,A).setColor(Color.X11.green).setArrowHead(ArrowType.empty).setLabel("enables").setFontSize(10));
-					}else{
-						g.addEdge(new Edge(A,B).setColor(Color.X11.green).setArrowHead(ArrowType.empty).setLabel("enables").setFontSize(10));
+				A = Conditional.getCTXString(pair.getKey().A);
+				B = Conditional.getCTXString(pair.getKey().B);
+			//	System.out.println("Pair = [" + A + "," + B + "= " + pair.getValue() + "]");
+				String concat = B;
+				
+				List<String> l = pair.getValue();
+				for(String exp: l){
+					//System.out.println("expr: " + exp);
+				
+					if(exp.contains("not interact")){
+						continue;
+					}
+					else if(exp.contains("interact")){
+						String shownVars = "";
+						for(List<String> vars: allVars){
+							expV = vars.get(0);						
+							if((expV.contains(A) && expV.contains(B)) && shownVars==""){
+								
+								for(int i=1; i<vars.size();i++){//String v: vars){
+									String a = vars.get(i).substring(0,vars.get(i).length()-3);
+									a = "var"+i + ": " + a;
+									shownVars += a;
+									if(i<vars.size()-1)
+										shownVars += "\n";
+								}
+								System.out.println("Overwritten vars from [" + A + "," + B + "] =" + shownVars);
+								g.addEdge(
+									new Edge(A,B).setArrowHead(ArrowType.none).setLabel(shownVars).setFontSize(10).setFontColor(Color.X11.blue));
+								
+//								if(allVars.size()>1)
+//									allVars.remove(vars);
+								
+								continue;
+							}
+						}
+						if(shownVars==""){
+							g.addEdge(
+									new Edge(A,B).setArrowHead(ArrowType.none));				
+						}
+					}
+					else if(exp.contains("enables")){
+						
+						String shownVars = "";
+						for(List<String> vars: allVars){
+							expV = vars.get(0);			
+							if(expV.contains(A) && expV.contains(B)){
+								
+								for(int i=1; i<vars.size();i++){//String v: vars){
+									String a = vars.get(i).substring(0,vars.get(i).length()-3);
+									a = "var"+i + ": " + a;
+									shownVars += a;
+									if(i<vars.size()-1)
+										shownVars += "\n";
+								}
+								System.out.println("Overwritten vars from [" + A + "," + B + "] =" + shownVars);
+								if(exp.startsWith(concat)){
+									Edge edge = new Edge(B,A);
+									edge.setColor(Color.X11.green).setArrowHead(ArrowType.empty);
+									edge.setLabel("enables \n" + shownVars).setFontSize(10);
+									edge.setToolTip("A");
+									g.addEdge(edge);
+									//g.addEdge(new Edge(B,A).setColor(Color.X11.green).setArrowHead(ArrowType.empty).setLabel("enables").setFontSize(10));
+								}else{
+									Edge edge = new Edge(A,B);
+									edge.setColor(Color.X11.green).setArrowHead(ArrowType.empty);
+									edge.setLabel("enables \n" + shownVars).setFontSize(10);
+									edge.setToolTip(shownVars);
+									g.addEdge(edge);
+									//g.addEdge(new Edge(A,B).setColor(Color.X11.green).setArrowHead(ArrowType.empty).setLabel("enables").setFontSize(10));
+								}
+								
+//								if(allVars.size()>1)
+//									allVars.remove(vars);
+								
+								continue;
+							}
+						}
+						
+						if(shownVars==""){
+							if(exp.startsWith(concat)){
+								Edge edge = new Edge(B,A);
+								edge.setColor(Color.X11.green).setArrowHead(ArrowType.empty);
+								edge.setLabel("enables \n" + shownVars).setFontSize(10);
+								edge.setToolTip("A");
+								g.addEdge(edge);
+								//g.addEdge(new Edge(B,A).setColor(Color.X11.green).setArrowHead(ArrowType.empty).setLabel("enables").setFontSize(10));
+							}else{
+								Edge edge = new Edge(A,B);
+								edge.setColor(Color.X11.green).setArrowHead(ArrowType.empty);
+								edge.setLabel("enables \n" + shownVars).setFontSize(10);
+								edge.setToolTip(shownVars);
+								g.addEdge(edge);
+								//g.addEdge(new Edge(A,B).setColor(Color.X11.green).setArrowHead(ArrowType.empty).setLabel("enables").setFontSize(10));
+							}
+								
+						}
+					}
+					else if(exp.contains("suppresses")){
+						
+						String shownVars = "";
+						for(List<String> vars: allVars){
+							expV = vars.get(0);
+						
+							if(expV.contains(A) && expV.contains(B)){
+								for(int i=1; i<vars.size();i++){//String v: vars){
+									String a = vars.get(i).substring(0,vars.get(i).length()-3);
+									a = "var"+i + ": " + a;
+									shownVars += a;
+									if(i<vars.size()-1)
+										shownVars += "\n";
+								}
+								System.out.println("Overwritten vars from [" + A + "," + B + "] =" + shownVars);
+								if(exp.startsWith(concat)){
+									Edge edge = new Edge(B,A);
+									edge.setColor(Color.X11.red).setArrowHead(ArrowType.empty);
+									edge.setFontSize(10).setLabel("suppresses \n" + shownVars);
+									edge.setLabelTooltip(shownVars);
+									g.addEdge(edge);
+									//g.addEdge(new Edge(B,A).setColor(Color.X11.red).setArrowHead(ArrowType.empty).setFontSize(10).setLabel("suppresses"));
+								}else{
+									Edge edge = new Edge(A,B);
+									edge.setColor(Color.X11.red).setArrowHead(ArrowType.empty);
+									edge.setFontSize(10).setLabel("suppresses \n" + shownVars);
+									edge.setLabelTooltip(shownVars);
+									g.addEdge(edge);
+									//g.addEdge(new Edge(A,B).setColor(Color.X11.red).setArrowHead(ArrowType.empty).setFontSize(10).setLabel("suppresses"));
+								}
+								
+//								if(allVars.size()>1)
+//									allVars.remove(vars);
+								continue;
+							}
+						}
+						if(shownVars==""){
+							if(exp.startsWith(concat)){
+								Edge edge = new Edge(B,A);
+								edge.setColor(Color.X11.red).setArrowHead(ArrowType.empty);
+								edge.setFontSize(10).setLabel("suppresses");
+								edge.setLabelTooltip(shownVars);
+								g.addEdge(edge);
+								//g.addEdge(new Edge(B,A).setColor(Color.X11.red).setArrowHead(ArrowType.empty).setFontSize(10).setLabel("suppresses"));
+							}else{
+								Edge edge = new Edge(A,B);
+								edge.setColor(Color.X11.red).setArrowHead(ArrowType.empty);
+								edge.setFontSize(10).setLabel("suppresses");
+								edge.setLabelTooltip(shownVars);
+								g.addEdge(edge);
+								//g.addEdge(new Edge(A,B).setColor(Color.X11.red).setArrowHead(ArrowType.empty).setFontSize(10).setLabel("suppresses"));
+							}
+						}
 					}
 				}
-				else if(exp.contains("suppresses")){
-					
-					if(exp.startsWith(concat)){
-						g.addEdge(new Edge(B,A).setColor(Color.X11.red).setArrowHead(ArrowType.empty).setFontSize(10).setLabel("suppresses"));
-					}else{				
-						g.addEdge(new Edge(A,B).setColor(Color.X11.red).setArrowHead(ArrowType.empty).setFontSize(10).setLabel("suppresses"));
-					}
-				}
-			}
+			
+			
+			
+			//}
 		}
 		
 		String concat = "";

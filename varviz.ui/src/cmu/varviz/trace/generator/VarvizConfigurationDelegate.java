@@ -29,6 +29,7 @@ import org.eclipse.ui.console.MessageConsoleStream;
 
 import cmu.conditional.Conditional;
 import cmu.varviz.trace.Edge;
+import cmu.varviz.trace.Statement;
 import cmu.varviz.trace.Trace;
 import cmu.varviz.trace.filters.And;
 import cmu.varviz.trace.filters.InteractionFilter;
@@ -140,6 +141,8 @@ public class VarvizConfigurationDelegate extends AbstractJavaLaunchConfiguration
 			JPF.vatrace = new Trace();
 			JPF.vatrace.filter = new Or(new And(VarvizView.basefilter, new InteractionFilter(VarvizView.minDegree)), new ExceptionFilter());
 			FeatureExprFactory.setDefault(FeatureExprFactory.bdd());
+			
+			System.out.println("test");
 			JPF.main(args);
 //			Conditional.additionalConstraint = BDDFeatureExprFactory.True();
 
@@ -182,305 +185,71 @@ public class VarvizConfigurationDelegate extends AbstractJavaLaunchConfiguration
 	//Lari
 	private void getImplications(List<Edge> edges, File workingDir) {
 		
+		List<String> featureVars = new ArrayList<>();
+		List<List> allVars = new ArrayList<>();
+		Statement<?> END = VarvizView.TRACE.getEND();
+		
 		List<FeatureExpr> expressions = new ArrayList<>();		
 		for (Edge edge : edges) {
 			FeatureExpr ctx = edge.getCtx();
-			String ctxString = Conditional.getCTXString(ctx);				
+			String ctxString = Conditional.getCTXString(ctx);	
 			
 			if (!expressions.contains(ctx) && !ctx.isTautology()) {
 				expressions.add(ctx);
-				System.out.println(ctx);
+				System.out.println("");
+				System.out.println(ctx);			
+				
+				getFeatureVars(ctx, ctxString, edge, featureVars, allVars, END);
 			} 
 		}
 		
 		InteractionFinder finder = new InteractionFinder();
-		finder.getInteractionsTable(expressions, workingDir);
-		
-//		Collection<SingleFeatureExpr> features = Conditional.features.values();//the whole set of features
-//		List<PairExp> exprPairs = new ArrayList<>();//the pairs present in the expressions
-//		List<PairExp> contain = new ArrayList<>();//only to not repeat the same pair "do not interact"
-//		List<SingleFeatureExpr> noEffectlist = new ArrayList<>();
-//		Map<PairExp, List<String>> hashMap = new HashMap<>();
-//		
-//		exprPairs = getExpressionsPairs(expressions);//get all the pairs in the expressions
-//		noEffectlist = getNoEffectlist(features, expressions);//list of features that do not appear in the expressions
-//		
-//		for (SingleFeatureExpr feature1 : features) {
-//			
-//			if (Conditional.isTautology(feature1)) {
-//				continue;
-//			}
-//			final FeatureExpr unique = createUnique2(feature1, expressions);
-//			
-//			if (Conditional.isContradiction(unique)) {//when a feature doesn't appear in the expressions
-//				continue;
-//			}		
-//			
-//			for (SingleFeatureExpr feature2 : features) {
-//				if (feature1 == feature2 || Conditional.isTautology(feature2)) {
-//					continue;//Conditional.isTautology(feature2) when the feature is the feature model root feature
-//				}			
-//				FeatureExpr first = feature2.implies(unique.not());
-//				FeatureExpr second = feature2.not().implies(unique.not());
-//				String phrase = new String("a");
-//									
-//				if (first.isTautology()) {
-//					//System.out.println(Conditional.getCTXString(feature1) + " suppresses " + Conditional.getCTXString(feature2));
-//					phrase = Conditional.getCTXString(feature1) + " suppresses " + Conditional.getCTXString(feature2);
-//				}
-//				if (second.isTautology()) {
-//					//System.out.println(Conditional.getCTXString(feature1) + " enables " + Conditional.getCTXString(feature2));
-//					phrase = Conditional.getCTXString(feature1) + " enables " + Conditional.getCTXString(feature2);
-//				}			
-//					
-//				PairExp pairAB = new PairExp(feature1, feature2);
-//				PairExp pairBA = new PairExp(feature2, feature1);	
-//				
-//				//if the pair is no present in the expressions
-//				if (!exprPairs.contains(pairAB) && !exprPairs.contains(pairBA) && !contain.contains(pairAB)){
-//					
-//					if (!noEffectlist.contains(feature1) && !noEffectlist.contains(feature2)) {				
-//						phrase = "do not interact";
-//					}
-//					else if(noEffectlist.contains(feature1)){
-//						phrase = Conditional.getCTXString(feature1) + " has no effect";
-//					}
-//					
-//					else if(noEffectlist.contains(feature2)){
-//						phrase = Conditional.getCTXString(feature2) + " has no effect";
-//					}
-//					contain.add(pairAB);//to avoid repeat the same pair in a different order
-//					contain.add(pairBA);
-//				}
-//				
-//				if((!hashMap.containsKey(pairAB)) && (!hashMap.containsKey(pairBA)) && (!phrase.equals("a"))){
-//					hashMap.put(pairAB, new ArrayList<>());
-//					hashMap.get(pairAB).add(phrase);
-//				}
-//				else{
-//					if(!phrase.equals("a")){
-//					hashMap.get(pairAB).add(phrase);
-//					}
-//				}
-//			}	
-//		}
-//		
-//		//when both features of a pair have no effect
-//		addDoubleNoEffect(noEffectlist, hashMap);
-//		
-//		//when both features of a pair interact but they are not suppressing or enabling each other
-//		String phrase = "a";
-//		for(PairExp pair: exprPairs){
-//			if(!hashMap.containsKey(pair)){
-//				phrase = "do interact";
-//				hashMap.put(pair, new ArrayList<>());
-//				hashMap.get(pair).add(phrase);			
-//			}
-//		}
-//		
-//		//creates excel table
-//		createExcelTable(hashMap, features, workingDir);		
-//		
+		finder.getInteractionsTable(expressions, workingDir, allVars);		
 	}
-
-	private void createExcelTable(Map<PairExp, List<String>> hashMap, Collection<SingleFeatureExpr> features, File workingDir) {
-		//print hash
-		for (Entry<PairExp, List<String>> pair : hashMap.entrySet()) {
-			System.out.println("Pair = [" + pair.getKey() + " , " + pair.getValue() + "]");
-		}
-		
-		int c = features.size();
-		for (SingleFeatureExpr feature1 : features) {
-			 if (Conditional.isTautology(feature1)) {
-					c--;
-				}
-		 }
-		
-		 Map < String, Object[] > excelTable = new TreeMap < String, Object[] >();
-		 int count = 0;
-		 Object[] line1 = new Object[c+1];
-		 line1[count++] = "Features";//array of 1 line
-		 for (SingleFeatureExpr feature1 : features) {
-			 if (Conditional.isTautology(feature1)) {
-					continue;
-				}
-			 line1[count++] = Conditional.getCTXString(feature1);
-		 }
-		 excelTable.put( Integer.toString(1), line1);//first line with the name of all features
-		 
-		 
-		 int excelline = 2;
-		 for (int i = 1; i< line1.length; i++) {
-			 count = 1;
-			 Object[] line = new Object[c+1];
-			 line[0] = line1[i];
-			 for (int j = 1; j< line1.length; j++) {
-				 
-				 if(line1[j].equals(line[0])){
-					 line[count] = " X ";
-					 System.out.println("line[" + count + "] = " + line[count]);
-					 count++;
-					 continue;
-				 }
-				 
-				 for (Entry<PairExp, List<String>> pair : hashMap.entrySet()) {
-					 String A = Conditional.getCTXString(pair.getKey().A);
-					 String B = Conditional.getCTXString(pair.getKey().B);
-					 //System.out.println("A: " + A + " = " + line[0] + " && " + "B: " + B + " = " + line1[j]);
-					// System.out.println("A: " + A + " = " + line1[j] + " && " + "B: " + B + " = " + line[0]);
-					 
-					 
-					 if(A.equals(line[0]) && B.equals(line1[j])
-						|| A.equals(line1[j]) && B.equals(line[0])) {
-						 
-						 line[count] = pair.getValue().get(0);
-						 if(pair.getValue().size() >1){
-							 line[count] = "both have no effect";
-						 }
-						 
-						 System.out.println("line[" + count + "] = " + line[count]);
-						 count++;
-					 }
-				 }
-			 }
-			 
-			 excelTable.put( Integer.toString(excelline++), line);
-		 }
-		
-		 
-		Excel ex = new Excel();
-		try {
-			ex.writesheet(excelTable, workingDir);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-	}
-
 	
-	
-	//add in the table when both features of a pair have no effect
-	private void addDoubleNoEffect(List<SingleFeatureExpr> noEffectlist, Map<PairExp, List<String>> hashMap) {
+	private void getFeatureVars(FeatureExpr ctx, String ctxString, Edge edge, List<String> featureVars, List<List> allVars, Statement<?> eND) {
 		
-		if(noEffectlist.size()>1){
-			String phrase = "a";
-			for(int i = 0; i<noEffectlist.size(); i++){
-				for(int j = i+1; j<noEffectlist.size(); j++){	
-					PairExp pairNoEffect = new PairExp(noEffectlist.get(i), noEffectlist.get(j));
-					PairExp pairNoEffect2 = new PairExp(noEffectlist.get(j), noEffectlist.get(i));
-					if(!hashMap.containsKey(pairNoEffect) && !hashMap.containsKey(pairNoEffect2)){
-						hashMap.put(pairNoEffect, new ArrayList<>());
-						phrase = Conditional.getCTXString(noEffectlist.get(i)) + " has no effect";
-						hashMap.get(pairNoEffect).add(phrase);
-						phrase = Conditional.getCTXString(noEffectlist.get(j)) + " has no effect";
-						hashMap.get(pairNoEffect).add(phrase);
-					}
-					else{
-						hashMap.get(pairNoEffect).add(phrase);
-					}
+		featureVars = new ArrayList<>();
+		if(ctx.size()>1 && !(edge.getTo().toString().contains("if ("))){
+			if(edge.getTo().to.size()>1 && !(edge.getTo().to.toList().get(1).toString().contains("if ("))){
+				featureVars.add(ctxString);
+				System.out.println("Expr: " + ctxString);
+				featureVars.add(edge.getTo().toString());
+				System.out.println("Overwritten Var: " + edge.getTo().toString());
+				//List<?> a = edge.getTo().to.toList().get(1);
+				//Conditional<?> b = edge.getTo().to.simplify();
+				//System.out.println("edge size" + edge.getTo().to.toList().size());
+				if (!edge.getTo().to.toList().get(1).equals(eND)){
+					featureVars.add( edge.getTo().to.toList().get(1).toString());
+					System.out.println("Overwritten Var: " + edge.getTo().to.toList().get(1).toString());
+					System.out.println(edge.getTo().to.toList().get(1).getOldValue());
+					System.out.println(edge.getTo().to.toList().get(1).getValue());
 				}
+				allVars.add(featureVars);
 			}
-		}		
-	}
-
-	private FeatureExpr createUnique2(SingleFeatureExpr feature, List<FeatureExpr> contexts) {
-		FeatureExpr unique = FeatureExprFactory.False();
-		for (FeatureExpr ctx : contexts) {
-			//System.out.println("ctx.unique(feature):" + ctx.unique(feature));
-			unique = unique.or(ctx.unique(feature));
-		}
-		return unique;
-	}
-	
-	//list of features that do not appear in the expressions
-	private List<SingleFeatureExpr> getNoEffectlist(Collection<SingleFeatureExpr> features,
-			List<FeatureExpr> expressions) {
-		
-		List<SingleFeatureExpr> noEffectlist = new ArrayList<>();
-		for (SingleFeatureExpr feature : features) {
-			final FeatureExpr unique = createUnique2(feature, expressions);
-			if (Conditional.isContradiction(unique)) {//when a feature doesn't appear in the expressions
-				noEffectlist.add(feature);
-			}
-		}
-		return noEffectlist;
-	}
-
-	//get all the pairs in the expressions
-	private List<PairExp> getExpressionsPairs(List<FeatureExpr> expressions) {
-		
-		List<PairExp> exprPairs = new ArrayList<>();
-		int cutNumber = 7;
-		
-		for(FeatureExpr featureexpr : expressions){
+			else if (edge.getTo().to.size() == 1 && !edge.getTo().equals(eND)){
+				featureVars.add(ctxString);
+				featureVars.add(edge.getTo().toString());
+				System.out.println("Overwritten Var: " + edge.getTo().toString());
+				
+				if (!edge.getTo().to.toList().get(0).equals(eND)){
+					featureVars.add( edge.getTo().to.toList().get(0).toString());
+					System.out.println("Overwritten Var: " + edge.getTo().to.toList().get(0).toString());
+					System.out.println(edge.getTo().to.toList().get(0).getOldValue());
+					System.out.println(edge.getTo().to.toList().get(0).getValue());
+				}
 			
-			Set<String> dist = featureexpr.collectDistinctFeatures();
-			if(dist.size() == 2){
-				scala.collection.Iterator<String> it = dist.iterator();
-				String s = it.next().substring(cutNumber);
-				String s2 = it.next().substring(cutNumber);
-				
-				// Step 2: get features
-				SingleFeatureExpr f1  = Conditional.createFeature(s);
-				SingleFeatureExpr f2 = Conditional.createFeature(s2);
-				
-				PairExp pairAB = new PairExp(f1, f2);			
-				if (!exprPairs.contains(pairAB)){
-					exprPairs.add(pairAB);
-				}
+				allVars.add(featureVars);
 			}
-//			else if (dist.size() == 3){
-//				scala.collection.Iterator<String> it = dist.iterator();
-//				String s = it.next().substring(cutNumber);
-//				String s2 = it.next().substring(cutNumber);
-//				String s3 = it.next().substring(cutNumber);
-//				
-//				// Step 2: get features
-//				SingleFeatureExpr f1  = Conditional.createFeature(s);
-//				SingleFeatureExpr f2 = Conditional.createFeature(s2);
-//				
-//				PairExp pairAB = new PairExp(f1, f2);			
-//				if (!exprPairs.contains(pairAB)){
-//					exprPairs.add(pairAB);
-//				}
-//			}
+							
 		}
-		return exprPairs;
+		
+//		System.out.println("Trying: " + ctxString + "= getTo: "+ edge.getTo());
+//		System.out.println("Trying: " + ctxString + "= getFrom: "+ edge.getFrom());
+//		System.out.println("Trying: " + ctxString + "= getTo().to: "+ edge.getTo().to);			
+//		System.out.println("Trying: " + ctxString + "= getTo().from: " + edge.getTo().from);
+		
 	}
-
-	class PairExp {
-		FeatureExpr A, B;
-
-		public PairExp(SingleFeatureExpr a, SingleFeatureExpr b) {
-			A = a;
-			B = b;
-		}
-		public FeatureExpr getA() {
-			return A;
-		}
-		public FeatureExpr getB() {
-			return B;
-		}
-		
-		@Override
-		public boolean equals(Object obj) {
-			PairExp other =  (PairExp) obj;
-			return (A.equals(other.A) && B.equals(other.B)) ||
-					(A.equals(other.B) && B.equals(other.A));
-		}
-		
-		@Override
-		public int hashCode() {
-			return A.hashCode() * B.hashCode() * 31;
-		}
-		
-		@Override
-		public String toString() {
-			return Conditional.getCTXString(A) + ", " + Conditional.getCTXString(B);
-		}
-	}
-
 
 	private PrintStream createOutputStream(PrintStream originalOut, final MessageConsoleStream consoleStream) {
 		return new PrintStream(originalOut) {
