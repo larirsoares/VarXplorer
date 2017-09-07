@@ -3,8 +3,8 @@ package cmu.varviz.trace;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
+import java.util.ListIterator;
 
 import cmu.conditional.ChoiceFactory;
 import cmu.conditional.Conditional;
@@ -42,14 +42,18 @@ public class Trace {
 	}
 	
 	public void filterExecution() {
-		filterExecution(main);
+		filterExecution(main, true);
 	}
 	
 	public void filterExecution(Method<?> m) {
+		filterExecution(m, false);
+	}
+	
+	public void filterExecution(Method<?> m, boolean deep) {
 		if (m == null || m.size() == 0) {
 			return;
 		}
-		m.filterExecution(filter);
+		m.filterExecution(filter, deep);
 	}
 	
 	public void createEdges() {
@@ -64,7 +68,7 @@ public class Trace {
 		System.out.print("Number of nodes: " + main.size());
 		System.out.flush();
 		filterExecution();
-		removeUnnecessaryIfs(main);
+		removeUnnecessaryIfs(main, true);
 		createEdges();
 		highlightException();
 		System.out.println(" -> " + main.size());
@@ -155,31 +159,42 @@ public class Trace {
 	}
 	
 	public static final void removeUnnecessaryIfs(Method<?> method) {
-		final Collection<MethodElement<?>> children = method.getChildren();
-		ArrayList<MethodElement<?>> reversed = new ArrayList<>();
-		reversed.addAll(children);
-		Collections.reverse(reversed);
-		
-		for (MethodElement<?> element : reversed) {
-			if (element instanceof Statement && ((Statement<?>)element).getShape() == Shape.Mdiamond) {
-				Statement<?> ifStatement = (Statement<?>)element;
-				
+		removeUnnecessaryIfs(method, false);
+	}
+	
+	public static final void removeUnnecessaryIfs(Method<?> method, boolean deep) {
+		final List<MethodElement<?>> children = method.getChildren();
+		final ListIterator<MethodElement<?>> li = children.listIterator(children.size());
+		int line = Integer.MIN_VALUE;
+		final List<MethodElement<?>> removeThese = new ArrayList<>();
+		while (li.hasPrevious()) {
+			final MethodElement<?> element = li.previous();
+			if (element instanceof Statement && ((Statement<?>) element).getShape() == Shape.Mdiamond) {
+				Statement<?> ifStatement = (Statement<?>) element;
+
 				boolean hasDecission = checkForDecision(ifStatement, children);
-				if (!hasDecission) {
-					method.remove(ifStatement);
+				if (hasDecission) {
+					line = ifStatement.lineNumber;
+				} else {
+					removeThese.add(element);
+					line = Integer.MIN_VALUE;
+				}
+				continue;
+			}
+
+			if (element.canBeRemoved(line)) {
+				removeThese.add(element);
+			}
+
+			if (deep && element instanceof Method) {
+				removeUnnecessaryIfs((Method<?>) element, deep);
+				if (((Method<?>) element).getChildren().isEmpty()) {
+					removeThese.add(element);
 				}
 			}
-			
-			if (element.canBeRemoved()) {
-				method.remove(element);
-			}
-			
-			if (element instanceof Method) {
-				removeUnnecessaryIfs((Method<?>)element);
-				if (((Method<?>)element).getChildren().isEmpty()) {
-					method.remove(element);
-				}
-			}
+		}
+		for (MethodElement<?> element : removeThese) {
+			method.remove(element);
 		}
 	}
 	

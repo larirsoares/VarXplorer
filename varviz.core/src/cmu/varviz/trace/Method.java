@@ -2,7 +2,6 @@ package cmu.varviz.trace;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.BiFunction;
@@ -56,7 +55,27 @@ public class Method<U> extends MethodElement<U> {
 	}
 	
 	public boolean filterExecution(StatementFilter filter) {
-		execution.removeIf(e -> !e.filterExecution(filter));
+		return filterExecution(filter, false);
+	}
+	
+	public boolean filterExecution(StatementFilter filter, boolean deep) {
+		if (deep) {
+			execution.removeIf(e -> {
+				if (e instanceof Method) {
+					return !((Method<?>) e).filterExecution(filter, deep);
+				} else {
+					return !e.filterExecution(filter);
+				}
+			});
+		} else {
+			execution.removeIf(e -> {
+				if (e instanceof Method) {
+					return ((Method<?>) e).execution.isEmpty();
+				} else {
+					return !e.filterExecution(filter);
+				}
+			});
+		}
 		return !execution.isEmpty();
 	}
 	
@@ -113,8 +132,8 @@ public class Method<U> extends MethodElement<U> {
 		return value;
 	}
 	
-	public Collection<MethodElement<?>> getChildren() {
-		return Collections.unmodifiableCollection(execution);
+	public List<MethodElement<?>> getChildren() {
+		return Collections.unmodifiableList(execution);
 	}
 	
 }
