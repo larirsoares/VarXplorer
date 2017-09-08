@@ -41,7 +41,7 @@ public class InteractionFinder {
 		List<SingleFeatureExpr> noEffectlist = new ArrayList<>();
 		Map<PairExp, List<String>> hashMap = new HashMap<>();
 		
-		exprPairs = getExpressionsPairs(expressions);;//get all the pairs in the expressions
+		exprPairs = getExpressionsPairs(expressions);//get all the pairs in the expressions
 		noEffectlist = getNoEffectlist(features, expressions);//list of features that do not appear in the expressions
 		
 		for (SingleFeatureExpr feature1 : features) {

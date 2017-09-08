@@ -199,7 +199,7 @@ public class VarvizConfigurationDelegate extends AbstractJavaLaunchConfiguration
 				System.out.println("");
 				System.out.println(ctx);			
 				
-				getFeatureVars(ctx, ctxString, edge, featureVars, allVars, END);
+				getFeatureVars(ctx, ctxString, edge, featureVars, allVars, END, expressions);
 			} 
 		}
 		
@@ -207,47 +207,93 @@ public class VarvizConfigurationDelegate extends AbstractJavaLaunchConfiguration
 		finder.getInteractionsTable(expressions, workingDir, allVars);		
 	}
 	
-	private void getFeatureVars(FeatureExpr ctx, String ctxString, Edge edge, List<String> featureVars, List<List> allVars, Statement<?> eND) {
+	private void getFeatureVars(FeatureExpr ctx, String ctxString, Edge edge, List<String> featureVars, List<List> allVars, Statement<?> eND, List<FeatureExpr> expressions) {
 		
 		featureVars = new ArrayList<>();
-		if(ctx.size()>1 && !(edge.getTo().toString().contains("if ("))){
-			if(edge.getTo().to.size()>1 && !(edge.getTo().to.toList().get(1).toString().contains("if ("))){
+		Statement<?> s = edge.getTo();
+		
+		if(ctx.size()>1 && checkExpression(edge)) {
+					
+			System.out.println(s.toString());
+			
+			if(!(s.toString().contains("if (")) && !(s.toString().contains("return "))){
+			
+			if(s.to.size()>1 && !(s.to.toList().get(1).toString().contains("if ("))){
 				featureVars.add(ctxString);
 				System.out.println("Expr: " + ctxString);
-				featureVars.add(edge.getTo().toString());
-				System.out.println("Overwritten Var: " + edge.getTo().toString());
-				//List<?> a = edge.getTo().to.toList().get(1);
-				//Conditional<?> b = edge.getTo().to.simplify();
-				//System.out.println("edge size" + edge.getTo().to.toList().size());
-				if (!edge.getTo().to.toList().get(1).equals(eND)){
-					featureVars.add( edge.getTo().to.toList().get(1).toString());
-					System.out.println("Overwritten Var: " + edge.getTo().to.toList().get(1).toString());
-					System.out.println(edge.getTo().to.toList().get(1).getOldValue());
-					System.out.println(edge.getTo().to.toList().get(1).getValue());
+				featureVars.add(s.toString());
+				System.out.println("Overwritten Var: " + s.toString());
+
+				if (!s.to.toList().get(1).equals(eND)){
+					System.out.println(s.getTo() );
+					Statement<?> nextVar = s.getTo().toList().get(1);
+					
+					if(nextVar.getCTX().equivalentTo(s.getCTX())){
+						featureVars.add( s.to.toList().get(1).toString());
+						System.out.println("Overwritten Var: " + s.to.toList().get(1).toString());
+					}
 				}
 				allVars.add(featureVars);
 			}
-			else if (edge.getTo().to.size() == 1 && !edge.getTo().equals(eND)){
+			else if (s.to.size() == 1 && !s.equals(eND)){
 				featureVars.add(ctxString);
-				featureVars.add(edge.getTo().toString());
-				System.out.println("Overwritten Var: " + edge.getTo().toString());
+				featureVars.add(s.toString());
+				System.out.println("Overwritten Var: " + s.toString());
 				
-				if (!edge.getTo().to.toList().get(0).equals(eND)){
-					featureVars.add( edge.getTo().to.toList().get(0).toString());
-					System.out.println("Overwritten Var: " + edge.getTo().to.toList().get(0).toString());
-					System.out.println(edge.getTo().to.toList().get(0).getOldValue());
-					System.out.println(edge.getTo().to.toList().get(0).getValue());
+				if (!s.to.toList().get(0).equals(eND)){
+					System.out.println(s.getTo() );
+					Statement<?> nextVar = s.getTo().toList().get(0);
+					
+					if(nextVar.getCTX().equivalentTo(s.getCTX())){
+						featureVars.add( s.to.toList().get(0).toString());
+						System.out.println("Overwritten Var: " + s.to.toList().get(0).toString());
+					}
 				}
 			
 				allVars.add(featureVars);
 			}
 							
 		}
+		}
 		
 //		System.out.println("Trying: " + ctxString + "= getTo: "+ edge.getTo());
 //		System.out.println("Trying: " + ctxString + "= getFrom: "+ edge.getFrom());
 //		System.out.println("Trying: " + ctxString + "= getTo().to: "+ edge.getTo().to);			
 //		System.out.println("Trying: " + ctxString + "= getTo().from: " + edge.getTo().from);
+		
+	}
+
+	private Boolean checkExpression(Edge edge) {
+		FeatureExpr ctx = edge.getCtx();
+		Statement<?> s = edge.getTo();
+		
+		Set<String> edgef = ctx.collectDistinctFeatures();
+		scala.collection.Iterator<String> fs = edgef.iterator();
+		
+		List<FeatureExpr> listUniqueExp =  new ArrayList<>();
+		
+		String uniqueExp = fs.next().substring(7);
+		FeatureExpr f  = Conditional.createFeature(uniqueExp);
+		System.out.println(edgef.size());
+		for(int i=1; i<edgef.size();i++){
+			f =  f.and( Conditional.createFeature(fs.next().substring(7)) ); 
+		}
+		listUniqueExp.add(f);//has the "and expressions"
+		return ctx.equivalentTo(f);
+		
+		//check if the statement is an "positive and" comparing it to "f" 
+		
+		
+//		Conditional<?> vEdge = edge.getValue();
+//		Conditional<?> voldEdge = edge.getOldValue();
+//		Set<SingleFeatureExpr> andpair = ctx.collectDistinctFeatureObjects();
+//		Set<String> andpair2 = ctx.collectDistinctFeatures();
+//		String andpair3 = ctx.toTextExpr();
+				
+//		if(dist.size() < 2){
+//			continue;
+//		}
+		//Conditional.getCTXString(A)
 		
 	}
 
