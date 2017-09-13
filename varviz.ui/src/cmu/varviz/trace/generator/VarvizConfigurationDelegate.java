@@ -42,6 +42,8 @@ import de.fosd.typechef.featureexpr.FeatureExprFactory;
 import de.fosd.typechef.featureexpr.SingleFeatureExpr;
 import de.fosd.typechef.featureexpr.bdd.BDDFeatureExprFactory;
 import gov.nasa.jpf.JPF;
+import interaction.DataFlowControl;
+import interaction.DataInteraction;
 import interaction.Excel;
 import interaction.InteractionFinder;
 import scala.collection.Iterator;
@@ -186,20 +188,28 @@ public class VarvizConfigurationDelegate extends AbstractJavaLaunchConfiguration
 	private void getImplications(List<Edge> edges, File workingDir) {
 		
 		List<String> featureVars = new ArrayList<>();
+		List<DataInteraction> DataInteracList = new ArrayList<>();
 		List<List> allVars = new ArrayList<>();
 		Statement<?> END = VarvizView.TRACE.getEND();
+		
+		DataFlowControl dataControl = new DataFlowControl();
 		
 		List<FeatureExpr> expressions = new ArrayList<>();		
 		for (Edge edge : edges) {
 			FeatureExpr ctx = edge.getCtx();
-			String ctxString = Conditional.getCTXString(ctx);	
+			
+			if (!ctx.isTautology()) {
+				
+				dataControl.getDataInteraction(edge, DataInteracList, END);
+				DataInteracList = dataControl.getDataInteracList();
+			}
 			
 			if (!expressions.contains(ctx) && !ctx.isTautology()) {
 				expressions.add(ctx);
 				System.out.println("");
 				System.out.println(ctx);			
 				
-				getFeatureVars(ctx, ctxString, edge, featureVars, allVars, END, expressions);
+				getFeatureVars(ctx, edge, featureVars, allVars, END);
 			} 
 		}
 		
@@ -207,8 +217,10 @@ public class VarvizConfigurationDelegate extends AbstractJavaLaunchConfiguration
 		finder.getInteractionsTable(expressions, workingDir, allVars);		
 	}
 	
-	private void getFeatureVars(FeatureExpr ctx, String ctxString, Edge edge, List<String> featureVars, List<List> allVars, Statement<?> eND, List<FeatureExpr> expressions) {
+
+	private void getFeatureVars(FeatureExpr ctx, Edge edge, List<String> featureVars, List<List> allVars, Statement<?> eND) {
 		
+		String ctxString = Conditional.getCTXString(ctx);
 		featureVars = new ArrayList<>();
 		Statement<?> s = edge.getTo();
 		
@@ -216,50 +228,45 @@ public class VarvizConfigurationDelegate extends AbstractJavaLaunchConfiguration
 					
 			System.out.println(s.toString());
 			
-			if(!(s.toString().contains("if (")) && !(s.toString().contains("return "))){
+			if(!(s.toString().contains("if (")) && !(s.toString().contains("return ")) && (s.to.toList().get(1)!=null)){
 			
-			if(s.to.size()>1 && !(s.to.toList().get(1).toString().contains("if ("))){
-				featureVars.add(ctxString);
-				System.out.println("Expr: " + ctxString);
-				featureVars.add(s.toString());
-				System.out.println("Overwritten Var: " + s.toString());
-
-				if (!s.to.toList().get(1).equals(eND)){
-					System.out.println(s.getTo() );
-					Statement<?> nextVar = s.getTo().toList().get(1);
-					
-					if(nextVar.getCTX().equivalentTo(s.getCTX())){
-						featureVars.add( s.to.toList().get(1).toString());
-						System.out.println("Overwritten Var: " + s.to.toList().get(1).toString());
+				if(s.to.size()>1 && !(s.to.toList().get(1).toString().contains("if ("))){
+					featureVars.add(ctxString);
+					System.out.println("Expr: " + ctxString);
+					featureVars.add(s.toString());
+					System.out.println("Overwritten Var: " + s.toString());
+	
+					if (!s.to.toList().get(1).equals(eND)){
+						System.out.println(s.getTo() );
+						Statement<?> nextVar = s.getTo().toList().get(1);
+						
+						if(nextVar.getCTX().equivalentTo(s.getCTX())){
+							featureVars.add( s.to.toList().get(1).toString());
+							System.out.println("Overwritten Var: " + s.to.toList().get(1).toString());
+						}
 					}
+					allVars.add(featureVars);
 				}
-				allVars.add(featureVars);
-			}
-			else if (s.to.size() == 1 && !s.equals(eND)){
-				featureVars.add(ctxString);
-				featureVars.add(s.toString());
-				System.out.println("Overwritten Var: " + s.toString());
+				else if (s.to.size() == 1 && !s.equals(eND)){
+					featureVars.add(ctxString);
+					featureVars.add(s.toString());
+					System.out.println("Overwritten Var: " + s.toString());
+					
+					if (!s.to.toList().get(0).equals(eND)){
+						System.out.println(s.getTo() );
+						Statement<?> nextVar = s.getTo().toList().get(0);
+						
+						if(nextVar.getCTX().equivalentTo(s.getCTX())){
+							featureVars.add( s.to.toList().get(0).toString());
+							System.out.println("Overwritten Var: " + s.to.toList().get(0).toString());
+						}
+					}
 				
-				if (!s.to.toList().get(0).equals(eND)){
-					System.out.println(s.getTo() );
-					Statement<?> nextVar = s.getTo().toList().get(0);
-					
-					if(nextVar.getCTX().equivalentTo(s.getCTX())){
-						featureVars.add( s.to.toList().get(0).toString());
-						System.out.println("Overwritten Var: " + s.to.toList().get(0).toString());
-					}
+					allVars.add(featureVars);
 				}
-			
-				allVars.add(featureVars);
+								
 			}
-							
 		}
-		}
-		
-//		System.out.println("Trying: " + ctxString + "= getTo: "+ edge.getTo());
-//		System.out.println("Trying: " + ctxString + "= getFrom: "+ edge.getFrom());
-//		System.out.println("Trying: " + ctxString + "= getTo().to: "+ edge.getTo().to);			
-//		System.out.println("Trying: " + ctxString + "= getTo().from: " + edge.getTo().from);
 		
 	}
 
@@ -280,20 +287,6 @@ public class VarvizConfigurationDelegate extends AbstractJavaLaunchConfiguration
 		}
 		listUniqueExp.add(f);//has the "and expressions"
 		return ctx.equivalentTo(f);
-		
-		//check if the statement is an "positive and" comparing it to "f" 
-		
-		
-//		Conditional<?> vEdge = edge.getValue();
-//		Conditional<?> voldEdge = edge.getOldValue();
-//		Set<SingleFeatureExpr> andpair = ctx.collectDistinctFeatureObjects();
-//		Set<String> andpair2 = ctx.collectDistinctFeatures();
-//		String andpair3 = ctx.toTextExpr();
-				
-//		if(dist.size() < 2){
-//			continue;
-//		}
-		//Conditional.getCTXString(A)
 		
 	}
 
