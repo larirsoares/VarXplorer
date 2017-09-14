@@ -28,10 +28,9 @@ public class DataFlowControl {
 		FeatureExpr sCtx = s.getCTX();	
 		Conditional<?> value = s.getValue();
 		
-		//ainda tá dando pau aqui !!!
-		System.out.println("pq dá pau aqui s: " + s);
-		System.out.println("pq dá pau aqui s.to: " + s.to);
-		//System.out.println("pq dá pau aqui s.to: " + s.to.toList().get(1));
+//		System.out.println("pq dá pau aqui s: " + s);
+//		System.out.println("pq dá pau aqui s.to: " + s.to);
+
 		if(s==null || s.equals(eND)){
 			return;
 		}

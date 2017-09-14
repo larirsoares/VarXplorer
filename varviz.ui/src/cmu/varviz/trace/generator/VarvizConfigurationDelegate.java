@@ -214,7 +214,7 @@ public class VarvizConfigurationDelegate extends AbstractJavaLaunchConfiguration
 		}
 		
 		InteractionFinder finder = new InteractionFinder();
-		finder.getInteractionsTable(expressions, workingDir, allVars);		
+		finder.getInteractionsTable(expressions, workingDir, allVars, DataInteracList);		
 	}
 	
 

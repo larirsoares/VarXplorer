@@ -33,7 +33,7 @@ public class InteractionFinder {
 		return unique;
 	}
 		
-	public void getInteractionsTable(List<FeatureExpr> expressions, File workingDir, List<List> allVars) {
+	public void getInteractionsTable(List<FeatureExpr> expressions, File workingDir, List<List> allVars, List<DataInteraction> dataInteracList) {
 		
 		Collection<SingleFeatureExpr> features = Conditional.features.values();//the whole set of features
 		List<PairExp> exprPairs = new ArrayList<>();//the pairs present in the expressions
@@ -125,7 +125,7 @@ public class InteractionFinder {
 		
 		//creates graph
 		InteractGraph g = new InteractGraph();		
-		g.createGraphInter(hashMap, features, noEffectlist, expressions, workingDir, allVars);		
+		g.createGraphInter(hashMap, features, noEffectlist, expressions, workingDir, allVars, dataInteracList);		
 	
 	}
 
