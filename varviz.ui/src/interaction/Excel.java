@@ -18,7 +18,12 @@ import org.apache.poi.ss.usermodel.IndexedColors;
 import org.apache.poi.ss.usermodel.Row;
 
 public class Excel {
-
+	/**
+	 * has...
+	 * 
+	 * @author Larissa Rocha
+	 *  
+	 */
 	private HSSFWorkbook workbook;
 
 	public void writesheet(Map<String, Object[]> table, File workingDir) throws IOException {

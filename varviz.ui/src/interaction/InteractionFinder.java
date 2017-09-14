@@ -15,9 +15,18 @@ import cmu.varviz.trace.Edge;
 import de.fosd.typechef.featureexpr.FeatureExpr;
 import de.fosd.typechef.featureexpr.FeatureExprFactory;
 import de.fosd.typechef.featureexpr.SingleFeatureExpr;
+import interaction.dataflow.DataInteraction;
+import interaction.view.InteractGraph;
 import scala.Option;
 import scala.Tuple2;
 import scala.collection.immutable.Set;
+
+/**
+ * has...
+ * 
+ * @author Larissa Rocha
+ *  
+ */
 
 public class InteractionFinder {
 	static {
@@ -281,7 +290,7 @@ public class InteractionFinder {
 		return exprPairs;
 	}
 
-	class PairExp {
+	public class PairExp {
 		FeatureExpr A, B;
 
 		public PairExp(SingleFeatureExpr a, SingleFeatureExpr b) {

@@ -42,10 +42,10 @@ import de.fosd.typechef.featureexpr.FeatureExprFactory;
 import de.fosd.typechef.featureexpr.SingleFeatureExpr;
 import de.fosd.typechef.featureexpr.bdd.BDDFeatureExprFactory;
 import gov.nasa.jpf.JPF;
-import interaction.DataFlowControl;
-import interaction.DataInteraction;
 import interaction.Excel;
 import interaction.InteractionFinder;
+import interaction.dataflow.DataFlowControl;
+import interaction.dataflow.DataInteraction;
 import scala.collection.Iterator;
 import scala.collection.immutable.Set;
 
