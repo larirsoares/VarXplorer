@@ -1,4 +1,4 @@
-package interaction;
+package interaction.view;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -16,6 +16,12 @@ import info.leadinglight.jdot.impl.Util;
 
 public class SVGCanvas {
 	
+	/**
+	 * has...
+	 * 
+	 * @author Larissa Rocha
+	 *  
+	 */
 	
 	public SVGCanvas (Graph g, File workingDir) {
 		

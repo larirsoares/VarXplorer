@@ -1,4 +1,4 @@
-package interaction;
+package interaction.dataflow;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,6 +10,13 @@ import cmu.varviz.trace.Statement;
 import de.fosd.typechef.featureexpr.FeatureExpr;
 import de.fosd.typechef.featureexpr.SingleFeatureExpr;
 import scala.collection.immutable.Set;
+
+/**
+ * has...
+ * 
+ * @author Larissa Rocha
+ *  
+ */
 
 public class DataFlowControl {
 	

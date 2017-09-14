@@ -1,4 +1,4 @@
-package interaction;
+package interaction.view;
 
 import java.awt.Graphics;
 import java.awt.Paint;
@@ -18,6 +18,12 @@ import org.apache.batik.transcoder.image.ImageTranscoder;
 import org.apache.batik.util.SVGConstants;
 
 public class GraphPanel extends JPanel {
+	/**
+	 * has...
+	 * 
+	 * @author Larissa Rocha
+	 *  
+	 */
 	
 	private BufferedImage graphImage;
 	

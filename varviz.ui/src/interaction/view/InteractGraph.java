@@ -1,4 +1,4 @@
-package interaction;
+package interaction.view;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -12,7 +12,18 @@ import de.fosd.typechef.featureexpr.FeatureExpr;
 import de.fosd.typechef.featureexpr.SingleFeatureExpr;
 import info.leadinglight.jdot.*;
 import info.leadinglight.jdot.enums.*;
+import interaction.InteractionFinder;
 import interaction.InteractionFinder.PairExp;
+import interaction.dataflow.DataInteraction;
+import interaction.dataflow.DataFlowControl;
+import interaction.dataflow.DataVar;
+/**
+ * has...
+ * 
+ * @author Larissa Rocha
+ *  
+ */
+
 
 public class InteractGraph {
 
@@ -34,8 +45,8 @@ public class InteractGraph {
 		String expV = "";
 		for (Entry<PairExp, List<String>> pair : hashMap.entrySet()) {					
 			
-				A = Conditional.getCTXString(pair.getKey().A);
-				B = Conditional.getCTXString(pair.getKey().B);
+				A = Conditional.getCTXString(pair.getKey().getA());
+				B = Conditional.getCTXString(pair.getKey().getB());
 			//	System.out.println("Pair = [" + A + "," + B + "= " + pair.getValue() + "]");
 				String concat = B;
 				

@@ -1,11 +1,19 @@
-package interaction;
+package interaction.dataflow;
 
 import java.util.ArrayList;
 import java.util.List;
+import interaction.dataflow.DataVar;
 
 import cmu.conditional.Conditional;
 import de.fosd.typechef.featureexpr.FeatureExpr;
 import de.fosd.typechef.featureexpr.SingleFeatureExpr;
+
+/**
+ * has...
+ * 
+ * @author Larissa Rocha
+ *  
+ */
 
 public class DataInteraction {	
 	FeatureExpr A, B, C;
@@ -137,46 +145,3 @@ public class DataInteraction {
 	}
 }
 
-class DataVar {
-	
-	String name;
-	List<FeatureExpr> ctxList = new ArrayList<>();
-	public DataVar(String name, FeatureExpr context) {
-		super();
-		this.name = name;
-		this.ctxList.add(context);
-	}
-	public DataVar(String name, List<FeatureExpr> context) {
-		super();
-		this.name = name;
-		this.ctxList = context;
-	}
-	
-	public String getName() {
-		return name;
-	}
-	public List<FeatureExpr> getCtxList() {
-		return ctxList;
-	}	
-	public void setContext(FeatureExpr context){
-		this.ctxList.add(context);
-	}
-	public boolean hascontext(FeatureExpr context){
-		if(this.ctxList.contains(context)){
-			return true;
-		}
-		return false;
-	}
-	public void updateCtx(List<FeatureExpr> newList){
-		for(FeatureExpr context: newList){
-			if(!this.ctxList.contains(context)){
-				this.ctxList.add(context);
-			}
-		}
-	}
-	@Override
-	public String toString() {
-		return this.name;
-	}
-	
-}
