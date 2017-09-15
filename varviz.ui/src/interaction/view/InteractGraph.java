@@ -13,7 +13,7 @@ import de.fosd.typechef.featureexpr.SingleFeatureExpr;
 import info.leadinglight.jdot.*;
 import info.leadinglight.jdot.enums.*;
 import interaction.InteractionFinder;
-import interaction.InteractionFinder.PairExp;
+import interaction.PairExp;
 import interaction.dataflow.DataInteraction;
 import interaction.dataflow.DataFlowControl;
 import interaction.dataflow.DataVar;

@@ -17,6 +17,7 @@ import de.fosd.typechef.featureexpr.FeatureExprFactory;
 import de.fosd.typechef.featureexpr.SingleFeatureExpr;
 import interaction.dataflow.DataInteraction;
 import interaction.view.InteractGraph;
+import interaction.PairExp;
 import scala.Option;
 import scala.Tuple2;
 import scala.collection.immutable.Set;
@@ -288,39 +289,7 @@ public class InteractionFinder {
 		}
 		
 		return exprPairs;
-	}
-
-	public class PairExp {
-		FeatureExpr A, B;
-
-		public PairExp(SingleFeatureExpr a, SingleFeatureExpr b) {
-			A = a;
-			B = b;
-		}
-		public FeatureExpr getA() {
-			return A;
-		}
-		public FeatureExpr getB() {
-			return B;
-		}
-		
-		@Override
-		public boolean equals(Object obj) {
-			PairExp other =  (PairExp) obj;
-			return (A.equals(other.A) && B.equals(other.B)) ||
-					(A.equals(other.B) && B.equals(other.A));
-		}
-		
-		@Override
-		public int hashCode() {
-			return A.hashCode() * B.hashCode() * 31;
-		}
-		
-		@Override
-		public String toString() {
-			return Conditional.getCTXString(A) + ", " + Conditional.getCTXString(B);
-		}
-	}
-	
-	
+	}	
 }
+
+
