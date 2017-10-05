@@ -109,7 +109,7 @@ public class StatementFigure extends RoundedRectangle {
 
 	private String createText(Conditional<?> value) {
 		if (value.isOne()) {
-			return value.getValue().toString();
+			return value.getValue() == null ? "null" : value.getValue().toString();
 		} else {
 			final Collection<?> entries = value.toMap().keySet();
 			int maxLength = 0;
@@ -119,7 +119,7 @@ public class StatementFigure extends RoundedRectangle {
 			
 			final List<FeatureExpr> sortedExpressions = new ArrayList<>();
 			sortedExpressions.addAll(value.toMap().values());
-			Collections.sort(sortedExpressions, (o1, o2) -> o1.toString().replaceAll("!", "Z").compareToIgnoreCase(o2.toString().replaceAll("!", "Z")));
+//			Collections.sort(sortedExpressions, (o1, o2) -> o1.toString().replaceAll("!", "Z").compareToIgnoreCase(o2.toString().replaceAll("!", "Z")));
 
 			final StringBuilder text = new StringBuilder();
 			for (FeatureExpr context : sortedExpressions) {

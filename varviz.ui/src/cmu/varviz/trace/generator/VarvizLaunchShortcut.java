@@ -7,7 +7,6 @@ import java.util.List;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.debug.core.DebugPlugin;
@@ -17,6 +16,8 @@ import org.eclipse.jdt.core.IType;
 import org.eclipse.jdt.debug.ui.launchConfigurations.JavaApplicationLaunchShortcut;
 import org.eclipse.jdt.debug.ui.launchConfigurations.JavaLaunchShortcut;
 import org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants;
+
+import cmu.varviz.trace.view.VarvizView;
 
 /**
  * Implements the "run as" shortcut.
@@ -50,12 +51,12 @@ public class VarvizLaunchShortcut extends JavaApplicationLaunchShortcut {
 	}
 
 	private void runVarexJ(final String mode, final ILaunchConfiguration config) {
-		Job job = new Job("Run with VarexJ") {
+		Job job = new Job("Run with " + (VarvizView.useVarexJ ? "VarexJ" : "SampleJ")) {
 			
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
 				try {
-					new VarvizConfigurationDelegate().launch(config, mode, null, new NullProgressMonitor());
+					new VarvizConfigurationDelegate().launch(config, mode, null, monitor);
 				} catch (CoreException e) {
 					e.printStackTrace();
 				}
