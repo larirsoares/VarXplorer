@@ -33,7 +33,14 @@ public class PairExp {
 		
 		@Override
 		public String toString() {
-			return Conditional.getCTXString(A) + ", " + Conditional.getCTXString(B);
+			return Conditional.getCTXString(A) + " , " + Conditional.getCTXString(B);
+		}
+		
+		public String toStringA(){
+			return Conditional.getCTXString(A);
+		}
+		public String toStringB(){
+			return Conditional.getCTXString(B);
 		}
 	
 }

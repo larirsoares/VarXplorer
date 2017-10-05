@@ -1,6 +1,8 @@
 package interaction.dataflow;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map.Entry;
 
@@ -38,6 +40,18 @@ public class DataFlowControl {
 //		System.out.println("pq dá pau aqui s: " + s);
 //		System.out.println("pq dá pau aqui s.to: " + s.to);
 
+//		SingleFeatureExpr a = Conditional.createFeature("decrypt");
+//		SingleFeatureExpr b = Conditional.createFeature("encrypt");
+//		SingleFeatureExpr c = Conditional.createFeature("f1");
+//	    List<FeatureExpr> sourceList = new ArrayList<>();
+//	    List<FeatureExpr> destinationList = new ArrayList<>();
+//	    sourceList.add(a); sourceList.add(b);
+//	    destinationList.add(b); destinationList.add(a);
+//	    equalsList(sourceList, destinationList);
+//	    destinationList.remove(b); destinationList.add(c);
+//	    equalsList(sourceList, destinationList);
+	    //--------------
+
 		if(s==null || s.equals(eND)){
 			return;
 		}
@@ -47,18 +61,20 @@ public class DataFlowControl {
 		else if(s.to.toList().get(1)==null){
 			return;
 		}
-		else if(s.toString().contains("if (") || s.toString().contains("return ")|| s.to.toList().get(1).equals(eND) ){
+		else if(s.toString().contains("if (") || s.toString().contains("return ")){
 			return;
 		}
+		else if(s.to.toList().get(1).equals(eND)){
+			System.out.println("It's the END, but...");
+		}
 		boolean flag = false;
-		int a = 1;
 		
 		DataInteraction interaction = null;
 		String var = s.toString();
 		
 		for (Entry<?, FeatureExpr> e : value.toMap().entrySet()) {
 			FeatureExpr context = e.getValue();
-			System.out.println(context);
+			System.out.println("context from value: " + context + " and ctx: " + ctx );
 			//se entrar aqui é porque a var depende de mais F do que a edge. 
 			if(context.collectDistinctFeatures().size()>ctx.size()){
 
@@ -200,7 +216,7 @@ public class DataFlowControl {
 						}
 						
 						//se o contexto for diferente e a interação não exisitr
-						else if(!list.getFeatures().equals(interaction.getFeatures()) && list!=null){
+						else if(list!=null && !list.getFeatures().equals(interaction.getFeatures())){
 							
 							DataInteraction newinteraction = createInteraction(context);
 							if(newinteraction==null){
@@ -267,7 +283,8 @@ public class DataFlowControl {
 		if(!dataInteracList.isEmpty()){
 			for(int i=0; i<dataInteracList.size(); i++){
 				DataInteraction interFromList = dataInteracList.get(i);
-				if(interFromList.getFeatures().equals(interaction.getFeatures())){
+				//if(interFromList.getFeatures().equals(interaction.getFeatures())){
+				if(equalsList(interFromList.getFeatures(), interaction.getFeatures())){
 					//entao tenho que atualizar as variaveis de dataInteracList.get(i) com a list de "interaction"
 					for(DataVar var: interaction.getDataVars()){
 						if(interFromList.containsVar(var)){
@@ -307,7 +324,6 @@ public class DataFlowControl {
 		
 		List<FeatureExpr> dataFeatures = new ArrayList<>();
 		
-		
 		dataFeatures = getFeaturesFromContext(context);
 		
 		if(dataInteracList.isEmpty()){
@@ -317,13 +333,44 @@ public class DataFlowControl {
 		else if(!dataInteracList.isEmpty()){
 			for(int i=0; i<dataInteracList.size(); i++){
 				List<FeatureExpr> list = dataInteracList.get(i).getFeatures();
-				if(list.equals(dataFeatures)){
+				//já vi que o problema tá aqui, esse equals não dá certo se a ordem estiver diferente.
+				//List<FeatureExpr> listtmp = new ArrayList();			
+				//listtmp.addAll(dataFeatures.);
+				//listaTmp.addAll(nota1.getItens());
+				//listaTmp.removeAll(nota2.getItens());
+				//se eu usar o removreall nao precisaria disso
+				
+				if(equalsList(list, dataFeatures)){
 					return dataInteracList.get(i);
 				}
+				
+//				if(list.equals(dataFeatures)){
+//					return dataInteracList.get(i);
+//				}
 			}
 		}
 		return null;
 		
+	}
+	
+	private boolean equalsList(List<FeatureExpr> list, List<FeatureExpr> dataFeatures){
+		
+		List<FeatureExpr> sourceList = new ArrayList<FeatureExpr>(list);
+		 
+		if(list.size()!=dataFeatures.size()){
+			return false;
+		}
+		for(FeatureExpr f1: list){
+			for(FeatureExpr f2: dataFeatures){
+				if(f1.equivalentTo(f2)){
+					sourceList.remove(f1);
+				}
+			}
+		}
+		if(sourceList.size()==0)
+			return true;
+		else
+			return false;
 	}
 
 	private List<FeatureExpr> getFeaturesFromContext(FeatureExpr context) {

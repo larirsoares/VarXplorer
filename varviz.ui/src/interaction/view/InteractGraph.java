@@ -17,6 +17,7 @@ import interaction.PairExp;
 import interaction.dataflow.DataInteraction;
 import interaction.dataflow.DataFlowControl;
 import interaction.dataflow.DataVar;
+import interaction.spec.Specification;
 /**
  * has...
  * 
@@ -26,12 +27,15 @@ import interaction.dataflow.DataVar;
 
 
 public class InteractGraph {
+	ArrayList<Specification> SpecList;
+	
 
-	public void createGraphInter(Map<PairExp, List<String>> hashMap, Collection<SingleFeatureExpr> features, List<SingleFeatureExpr> noEffectlist, List<FeatureExpr> expressions, File workingDir, List<List> allVars, List<DataInteraction> dataInteracList){
+	public void createGraphInter(Map<PairExp, List<String>> hashMap, Collection<SingleFeatureExpr> features, List<SingleFeatureExpr> noEffectlist, List<FeatureExpr> expressions, File workingDir, List<List> allVars, List<DataInteraction> dataInteracList, ArrayList<Specification> specList){
 		Graph g = new Graph("FeatureInteractions");		
 		String A = "";
 		String B = "";
 		List<String> drawninteractions = new ArrayList<>();
+		SpecList = new ArrayList<Specification>(specList);
 		
 		for (SingleFeatureExpr feature1 : features) {
 			 String f = Conditional.getCTXString(feature1);
@@ -58,6 +62,10 @@ public class InteractGraph {
 						continue;
 					}
 					else if(exp.contains("interact")){
+						if(checkSpec(specList, A, B)){
+							continue;
+						}
+						
 						String shownVars = "";
 						for(List<String> vars: allVars){
 							expV = vars.get(0);						
@@ -65,7 +73,7 @@ public class InteractGraph {
 								
 								for(int i=1; i<vars.size();i++){//String v: vars){
 									String a = vars.get(i).substring(0,vars.get(i).length()-3);
-									a = "var"+i + ": " + a;
+									//a = "var"+i + ": " + a;
 									shownVars += a;
 									if(i<vars.size()-1)
 										shownVars += "\n";
@@ -83,6 +91,9 @@ public class InteractGraph {
 						}
 					}
 					else if(exp.contains("enables")){
+						if(checkSpec(specList, A, B)){
+							continue;
+						}
 						
 						String shownVars = "";
 						for(List<String> vars: allVars){
@@ -91,7 +102,7 @@ public class InteractGraph {
 								
 								for(int i=1; i<vars.size();i++){//String v: vars){
 									String a = vars.get(i).substring(0,vars.get(i).length()-3);
-									a = "var"+i + ": " + a;
+									//a = "var"+i + ": " + a;
 									shownVars += a;
 									if(i<vars.size()-1)
 										shownVars += "\n";
@@ -113,10 +124,7 @@ public class InteractGraph {
 									g.addEdge(edge);
 									drawninteractions.add(A+","+B);
 									//g.addEdge(new Edge(A,B).setColor(Color.X11.green).setArrowHead(ArrowType.empty).setLabel("enables").setFontSize(10));
-								}
-								
-//								if(allVars.size()>1)
-//									allVars.remove(vars);
+								}								
 								
 								continue;
 							}
@@ -144,6 +152,10 @@ public class InteractGraph {
 						}
 					}
 					else if(exp.contains("suppresses")){
+						if(checkSpec(specList, A, B)){
+							continue;
+						}
+						
 						
 						String shownVars = "";
 						for(List<String> vars: allVars){
@@ -152,7 +164,7 @@ public class InteractGraph {
 							if(expV.contains(A) && expV.contains(B)){
 								for(int i=1; i<vars.size();i++){//String v: vars){
 									String a = vars.get(i).substring(0,vars.get(i).length()-3);
-									a = "var"+i + ": " + a;
+									//a = "var"+i + ": " + a;
 									shownVars += a;
 									if(i<vars.size()-1)
 										shownVars += "\n";
@@ -212,35 +224,61 @@ public class InteractGraph {
 			//}
 		}
 		
-		//fazer aqui o dataInteraction
-		drawDataInteractions(dataInteracList, features, g, drawninteractions);
+		List<FeatureExpr> dataExpressions = new ArrayList<>();
+		//data interaction
+		drawDataInteractions(dataInteracList, features, g, drawninteractions, dataExpressions);
 		
 		
-		String concat = "";
-		for(FeatureExpr featureexpr : expressions){
-			concat+= Conditional.getCTXString(featureexpr) + "\n";
-		}
+		//here print all the expressions in the graph
+		String concat = printExpressions(dataExpressions, expressions);
 		g.setLabel(concat);
-		
 		new SVGCanvas(g,workingDir);
 	}
 
-	private void drawDataInteractions(List<DataInteraction> dataInteracList, Collection<SingleFeatureExpr> features, Graph g, List<String> drawninteractions) {
+	private String printExpressions(List<FeatureExpr> dexpressions, List<FeatureExpr> expressions) {
+		List<FeatureExpr> list = new ArrayList<>();
+		list.addAll(updateDataExp(dexpressions, expressions));
+		
+//		String concat = "";
+//		for(FeatureExpr featureexpr : expressions){
+//			concat+= Conditional.getCTXString(featureexpr) + "\n";
+//		}
+//		g.setLabel(concat);
+		String concat = "";
+		for(FeatureExpr featureexpr : list){
+			concat+= Conditional.getCTXString(featureexpr) + "\n";
+		}
+		return concat;
+		
+	}
+
+	private void drawDataInteractions(List<DataInteraction> dataInteracList, Collection<SingleFeatureExpr> features, Graph g, List<String> drawninteractions, List<FeatureExpr> dataExpressions) {
 		
 		String A = "";
 		String B = "";
 		String C = "";
+		
 		for(DataInteraction Interaction: dataInteracList){
+					
 			//List<FeatureExpr> dFeatures = Interaction.getFeatures();
 			List<FeatureExpr> fList = Interaction.getFeatures();
 			if(fList.size()==2){
 				A = Conditional.getCTXString(fList.get(0));
 				B = Conditional.getCTXString(fList.get(1));
+				
+				//checking specification
+				if(checkSpec(SpecList, A, B)){
+					continue;
+				}
+				
 				String shownVars = "";
 				int i = 1;
 				for(DataVar var: Interaction.getDataVars()){
+					updateDataExp(dataExpressions, var.getCtxList());
+					
+					//get the var to show in the graph
 					String a = var.getName().substring(0,var.getName().length()-3);
-					a = "var"+i + ": " + a;
+					//a = "var"+i + ": " + a;
 					shownVars += a;
 					if(i<Interaction.getDataVars().size())
 						shownVars += "\n";
@@ -262,8 +300,9 @@ public class InteractGraph {
 				String shownVars = "";
 				int i = 1;
 				for(DataVar var: Interaction.getDataVars()){
+					updateDataExp(dataExpressions, var.getCtxList());
 					String a = var.getName().substring(0,var.getName().length()-3);
-					a = "var"+i + ": " + a;
+					//a = "var"+i + ": " + a;
 					shownVars += a;
 					if(i<Interaction.getDataVars().size())
 						shownVars += "\n";
@@ -274,18 +313,30 @@ public class InteractGraph {
 				
 				//verify if controlflow exists
 				if(!hasInControlflow(A, B,drawninteractions)){
+					if(checkSpec(SpecList, A, B)){
+						continue;
+					}
+					
 					Edge edge = new Edge(A,B);
 					edge.setColor(Color.X11.orange).setStyle(Style.Edge.dashed).setArrowHead(ArrowType.none);
 					edge.setFontSize(10).setLabel(shownVars).setFontColor(Color.X11.black);
 					g.addEdge(edge);
 					
 				} else if(!hasInControlflow(A, C,drawninteractions)){
+					if(checkSpec(SpecList, A, C)){
+						continue;
+					}
+					
 					Edge edge = new Edge(A,C);
 					edge.setColor(Color.X11.orange).setStyle(Style.Edge.dashed).setArrowHead(ArrowType.none);
 					edge.setFontSize(10).setLabel(shownVars).setFontColor(Color.X11.black);
 					g.addEdge(edge);
 					
 				} else if(!hasInControlflow(B, C, drawninteractions)){
+					if(checkSpec(SpecList, B, C)){
+						continue;
+					}
+					
 					Edge edge = new Edge(B, C);
 					edge.setColor(Color.X11.orange).setStyle(Style.Edge.dashed).setArrowHead(ArrowType.none);
 					edge.setFontSize(10).setLabel(shownVars).setFontColor(Color.X11.black);
@@ -303,6 +354,29 @@ public class InteractGraph {
 		
 	}
 
+	private List<FeatureExpr>  updateDataExp(List<FeatureExpr> dataExpressions, List<FeatureExpr> list) {
+		// TODO Auto-generated method stub
+		if(dataExpressions.isEmpty())
+			dataExpressions.addAll(list);
+		else{
+			
+			List<FeatureExpr> sourceList = new ArrayList<FeatureExpr>(list);
+			 
+			for(FeatureExpr f1: list){
+				for(FeatureExpr f2: dataExpressions){
+					if(f1.equivalentTo(f2)){
+						sourceList.remove(f1);
+						continue;
+					}
+				}
+			}
+			if(!sourceList.isEmpty())
+				dataExpressions.addAll(sourceList);
+		}
+		return dataExpressions;
+		
+	}
+
 	private boolean hasInControlflow(String a, String b, List<String> drawninteractions) {
 		
 		if(drawninteractions.contains(a+","+b) || drawninteractions.contains(b+","+a)){
@@ -313,7 +387,17 @@ public class InteractGraph {
 		return false;
 	}
 	
-	
+	private boolean checkSpec(ArrayList<Specification> specList, String a, String b){
+		for(Specification s: specList){
+			if(s.getPair().toStringA().equals(a) && s.getPair().toStringB().equals(b)){
+				return true;
+			}
+			else if(s.getPair().toStringA().equals(b) && s.getPair().toStringB().equals(a)){
+				return true;
+			}				
+		}				
+		return false;
+	}
 
 	
 }

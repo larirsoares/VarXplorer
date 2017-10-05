@@ -18,6 +18,7 @@ import de.fosd.typechef.featureexpr.SingleFeatureExpr;
 public class DataInteraction {	
 	FeatureExpr A, B, C;
 	List<DataVar> dataVarList = new ArrayList<>();
+//	List<FeatureExpr> dataExpressions = new ArrayList<>();
 
 	public FeatureExpr getA() {
 		return A;
@@ -40,13 +41,20 @@ public class DataInteraction {
 	public List<DataVar> getDataVars() {
 		return dataVarList;
 	}
-//	public void setDataVars(List<String> dataVars) {
-//		this.dataVars = dataVars;
+//	public List<FeatureExpr> getDataExpressions() {
+//		return dataExpressions;
 //	}
-//	public void setVar(String var) {
-//		DataVar dVar = new DataVar(var, null);
-//		//this.dataVars.add(var);
-//		this.dataVarList.add(dVar);
+//	public void setDataExpressions(FeatureExpr exp) {
+//		this.dataExpressions.add(exp);
+//	}
+//	public Boolean hasDataExpressions(FeatureExpr exp) {
+//		this.dataExpressions.add(exp);
+//		for(FeatureExpr e: this.dataExpressions){
+//			if(e.equivalentTo(exp)){
+//				return true;
+//			}
+//		}
+//		return false;
 //	}
 	public void setVar(String var, FeatureExpr context) {
 		DataVar dVar = new DataVar(var, context);

@@ -29,6 +29,8 @@ import org.eclipse.ui.console.MessageConsoleStream;
 
 import cmu.conditional.Conditional;
 import cmu.varviz.trace.Edge;
+import cmu.varviz.trace.Method;
+import cmu.varviz.trace.MethodElement;
 import cmu.varviz.trace.Statement;
 import cmu.varviz.trace.Trace;
 import cmu.varviz.trace.filters.And;
@@ -167,10 +169,19 @@ public class VarvizConfigurationDelegate extends AbstractJavaLaunchConfiguration
 			JPF.vatrace.finalizeGraph();
 			VarvizView.TRACE = JPF.vatrace;
 			
-			//XXX Lari
+			//XXX Lari: interaction finder
 			List<Edge> ed = VarvizView.TRACE.getEdges();
-			getImplications(ed, workingDir);
-			
+			InteractionFinder finder = new InteractionFinder();
+			finder.getImplications(ed, workingDir);
+//			Method<?> mainMethod = VarvizView.TRACE.getMain();
+//			List<MethodElement<?>> children = mainMethod.getChildren();
+//			for (MethodElement<?> methodElement : children) {
+//				if (methodElement instanceof Method) {
+//					
+//				} else {
+//					methodElement.getParent();
+//				}
+//			}
 			
 			VarvizView.refreshVisuals();
 
@@ -182,112 +193,6 @@ public class VarvizConfigurationDelegate extends AbstractJavaLaunchConfiguration
 			monitor.done();
 			System.setOut(originalOutputStream);
 		}
-	}
-
-	//Lari
-	private void getImplications(List<Edge> edges, File workingDir) {
-		
-		List<String> featureVars = new ArrayList<>();
-		List<DataInteraction> DataInteracList = new ArrayList<>();
-		List<List> allVars = new ArrayList<>();
-		Statement<?> END = VarvizView.TRACE.getEND();
-		
-		DataFlowControl dataControl = new DataFlowControl();
-		
-		List<FeatureExpr> expressions = new ArrayList<>();		
-		for (Edge edge : edges) {
-			FeatureExpr ctx = edge.getCtx();
-			
-			if (!ctx.isTautology()) {
-				
-				dataControl.getDataInteraction(edge, DataInteracList, END);
-				DataInteracList = dataControl.getDataInteracList();
-			}
-			
-			if (!expressions.contains(ctx) && !ctx.isTautology()) {
-				expressions.add(ctx);
-				System.out.println("");
-				System.out.println(ctx);			
-				
-				getFeatureVars(ctx, edge, featureVars, allVars, END);
-			} 
-		}
-		
-		InteractionFinder finder = new InteractionFinder();
-		finder.getInteractionsTable(expressions, workingDir, allVars, DataInteracList);		
-	}
-	
-
-	private void getFeatureVars(FeatureExpr ctx, Edge edge, List<String> featureVars, List<List> allVars, Statement<?> eND) {
-		
-		String ctxString = Conditional.getCTXString(ctx);
-		featureVars = new ArrayList<>();
-		Statement<?> s = edge.getTo();
-		
-		if(ctx.size()>1 && checkExpression(edge)) {
-					
-			System.out.println(s.toString());
-			
-			if(!(s.toString().contains("if (")) && !(s.toString().contains("return ")) && (s.to.toList().get(1)!=null)){
-			
-				if(s.to.size()>1 && !(s.to.toList().get(1).toString().contains("if ("))){
-					featureVars.add(ctxString);
-					System.out.println("Expr: " + ctxString);
-					featureVars.add(s.toString());
-					System.out.println("Overwritten Var: " + s.toString());
-	
-					if (!s.to.toList().get(1).equals(eND)){
-						System.out.println(s.getTo() );
-						Statement<?> nextVar = s.getTo().toList().get(1);
-						
-						if(nextVar.getCTX().equivalentTo(s.getCTX())){
-							featureVars.add( s.to.toList().get(1).toString());
-							System.out.println("Overwritten Var: " + s.to.toList().get(1).toString());
-						}
-					}
-					allVars.add(featureVars);
-				}
-				else if (s.to.size() == 1 && !s.equals(eND)){
-					featureVars.add(ctxString);
-					featureVars.add(s.toString());
-					System.out.println("Overwritten Var: " + s.toString());
-					
-					if (!s.to.toList().get(0).equals(eND)){
-						System.out.println(s.getTo() );
-						Statement<?> nextVar = s.getTo().toList().get(0);
-						
-						if(nextVar.getCTX().equivalentTo(s.getCTX())){
-							featureVars.add( s.to.toList().get(0).toString());
-							System.out.println("Overwritten Var: " + s.to.toList().get(0).toString());
-						}
-					}
-				
-					allVars.add(featureVars);
-				}
-								
-			}
-		}
-		
-	}
-
-	private Boolean checkExpression(Edge edge) {
-		FeatureExpr ctx = edge.getCtx();
-		Statement<?> s = edge.getTo();
-		
-		Set<String> edgef = ctx.collectDistinctFeatures();
-		scala.collection.Iterator<String> fs = edgef.iterator();
-		
-		List<FeatureExpr> listUniqueExp =  new ArrayList<>();
-		
-		String uniqueExp = fs.next().substring(7);
-		FeatureExpr f  = Conditional.createFeature(uniqueExp);
-		System.out.println(edgef.size());
-		for(int i=1; i<edgef.size();i++){
-			f =  f.and( Conditional.createFeature(fs.next().substring(7)) ); 
-		}
-		listUniqueExp.add(f);//has the "and expressions"
-		return ctx.equivalentTo(f);
-		
 	}
 
 	private PrintStream createOutputStream(PrintStream originalOut, final MessageConsoleStream consoleStream) {
