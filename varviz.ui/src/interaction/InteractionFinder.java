@@ -55,21 +55,26 @@ public class InteractionFinder {
 		List<FeatureExpr> expressions = new ArrayList<>();		
 		for (Edge edge : edges) {
 			FeatureExpr ctx = edge.getCtx();
-			System.out.println("edge: " + edge);
+			//System.out.println("edge: " + edge);
 			int a = 1;
 			if (!ctx.isTautology()) {
 				
-				dataControl.getDataInteraction(edge, DataInteracList, END);
-				DataInteracList = dataControl.getDataInteracList();
-			}
-			
-			if (!expressions.contains(ctx) && !ctx.isTautology()) {
-				expressions.add(ctx);
-				System.out.println("");
-				System.out.println(ctx);			
+					dataControl.getDataInteraction(edge, DataInteracList, END);
+					DataInteracList = dataControl.getDataInteracList();
 				
-				getFeatureVars(ctx, edge, featureVars, allVars, END);
-			} 
+				//acho que talvez msm se já conter a expressao tem tb q testar se a variavel já existe
+				//tenho que rever isso aqui
+				if (!expressions.contains(ctx)) {
+					expressions.add(ctx);
+					System.out.println(ctx);			
+					
+					getFeatureVars(ctx, edge, featureVars, allVars, END);
+				}else{
+					System.out.println(ctx);			
+					
+					getFeatureVars(ctx, edge, featureVars, allVars, END);
+				}
+			}
 		}
 		ControlflowControl finder = new ControlflowControl();
 			
@@ -125,9 +130,11 @@ public class InteractionFinder {
 						System.out.println(s.getTo() );
 						Statement<?> nextVar = s.getTo().toList().get(1);
 
-						if(nextVar.getCTX().equivalentTo(s.getCTX())){
-							featureVars.add( s.to.toList().get(1).toString());
-							System.out.println("Overwritten Var: " + s.to.toList().get(1).toString());
+						if(nextVar.getCTX().equivalentTo(ctx)){//.equivalentTo(s.getCTX())){
+							if(!s.to.toList().get(1).toString().contains("return ")){													
+								featureVars.add( s.to.toList().get(1).toString());
+								System.out.println("Overwritten Var: " + s.to.toList().get(1).toString());
+							}
 						}
 					}
 					allVars.add(featureVars);

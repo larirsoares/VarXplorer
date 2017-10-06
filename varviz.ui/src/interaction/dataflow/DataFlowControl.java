@@ -1,8 +1,6 @@
 package interaction.dataflow;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map.Entry;
 
@@ -10,7 +8,6 @@ import cmu.conditional.Conditional;
 import cmu.varviz.trace.Edge;
 import cmu.varviz.trace.Statement;
 import de.fosd.typechef.featureexpr.FeatureExpr;
-import de.fosd.typechef.featureexpr.SingleFeatureExpr;
 import scala.collection.immutable.Set;
 
 /**
@@ -74,7 +71,7 @@ public class DataFlowControl {
 		
 		for (Entry<?, FeatureExpr> e : value.toMap().entrySet()) {
 			FeatureExpr context = e.getValue();
-			System.out.println("context from value: " + context + " and ctx: " + ctx );
+			//System.out.println("context from value: " + context + " and ctx: " + ctx );
 			//se entrar aqui é porque a var depende de mais F do que a edge. 
 			if(context.collectDistinctFeatures().size()>ctx.size()){
 

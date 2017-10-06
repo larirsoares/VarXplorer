@@ -10,12 +10,14 @@ import java.util.Map.Entry;
 import cmu.conditional.Conditional;
 import de.fosd.typechef.featureexpr.FeatureExpr;
 import de.fosd.typechef.featureexpr.SingleFeatureExpr;
-import info.leadinglight.jdot.*;
-import info.leadinglight.jdot.enums.*;
-import interaction.InteractionFinder;
+import info.leadinglight.jdot.Edge;
+import info.leadinglight.jdot.Graph;
+import info.leadinglight.jdot.Node;
+import info.leadinglight.jdot.enums.ArrowType;
+import info.leadinglight.jdot.enums.Color;
+import info.leadinglight.jdot.enums.Style;
 import interaction.PairExp;
 import interaction.dataflow.DataInteraction;
-import interaction.dataflow.DataFlowControl;
 import interaction.dataflow.DataVar;
 import interaction.spec.Specification;
 /**
@@ -97,7 +99,10 @@ public class InteractGraph {
 						
 						String shownVars = "";
 						for(List<String> vars: allVars){
-							expV = vars.get(0);			
+							expV = vars.get(0);
+							if(shownVars!=""){
+								shownVars += "\n";
+							}
 							if(expV.contains(A) && expV.contains(B)){
 								
 								for(int i=1; i<vars.size();i++){//String v: vars){
@@ -107,26 +112,27 @@ public class InteractGraph {
 									if(i<vars.size()-1)
 										shownVars += "\n";
 								}
-								System.out.println("Overwritten vars from [" + A + "," + B + "] =" + shownVars);
-								if(exp.startsWith(concat)){
-									Edge edge = new Edge(B,A);
-									edge.setColor(Color.X11.green).setArrowHead(ArrowType.empty);
-									edge.setLabel("enables \n" + shownVars).setFontSize(10);
-									edge.setToolTip("A");
-									g.addEdge(edge);
-									drawninteractions.add(A+","+B);
-									//g.addEdge(new Edge(B,A).setColor(Color.X11.green).setArrowHead(ArrowType.empty).setLabel("enables").setFontSize(10));
-								}else{
-									Edge edge = new Edge(A,B);
-									edge.setColor(Color.X11.green).setArrowHead(ArrowType.empty);
-									edge.setLabel("enables \n" + shownVars).setFontSize(10);
-									edge.setToolTip(shownVars);
-									g.addEdge(edge);
-									drawninteractions.add(A+","+B);
-									//g.addEdge(new Edge(A,B).setColor(Color.X11.green).setArrowHead(ArrowType.empty).setLabel("enables").setFontSize(10));
-								}								
-								
-								continue;
+							}
+						}
+						System.out.println("Overwritten vars from [" + A + "," + B + "] =" + shownVars);
+							
+						if(shownVars!=""){
+							if(exp.startsWith(concat)){
+								Edge edge = new Edge(B,A);
+								edge.setColor(Color.X11.green).setArrowHead(ArrowType.empty);
+								edge.setLabel("enables \n" + shownVars).setFontSize(10);
+								edge.setToolTip("A");
+								g.addEdge(edge);
+								drawninteractions.add(A+","+B);
+								//g.addEdge(new Edge(B,A).setColor(Color.X11.green).setArrowHead(ArrowType.empty).setLabel("enables").setFontSize(10));
+							}else{
+								Edge edge = new Edge(A,B);
+								edge.setColor(Color.X11.green).setArrowHead(ArrowType.empty);
+								edge.setLabel("enables \n" + shownVars).setFontSize(10);
+								edge.setToolTip(shownVars);
+								g.addEdge(edge);
+								drawninteractions.add(A+","+B);
+								//g.addEdge(new Edge(A,B).setColor(Color.X11.green).setArrowHead(ArrowType.empty).setLabel("enables").setFontSize(10));
 							}
 						}
 						
