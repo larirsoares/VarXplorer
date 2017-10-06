@@ -1,31 +1,28 @@
 package interaction;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.Map.Entry;
 
 import cmu.conditional.Conditional;
 import cmu.varviz.trace.Edge;
+import cmu.varviz.trace.Method;
+import cmu.varviz.trace.MethodElement;
 import cmu.varviz.trace.Statement;
 import cmu.varviz.trace.view.VarvizView;
+import cmu.vatrace.LocalStoreStatement;
 import de.fosd.typechef.featureexpr.FeatureExpr;
-import de.fosd.typechef.featureexpr.FeatureExprFactory;
 import de.fosd.typechef.featureexpr.SingleFeatureExpr;
+import interaction.controlflow.ControlflowControl;
 import interaction.dataflow.DataFlowControl;
 import interaction.dataflow.DataInteraction;
+import interaction.dataflow.DataVar;
 import interaction.spec.SpecControl;
 import interaction.spec.Specification;
 import interaction.view.InteractGraph;
-import interaction.PairExp;
-import interaction.controlflow.ControlflowControl;
-import scala.Option;
-import scala.Tuple2;
 import scala.collection.immutable.Set;
 
 /**
@@ -36,6 +33,9 @@ import scala.collection.immutable.Set;
  */
 
 public class InteractionFinder {
+	
+	List<LocalStoreStatement> varList = new ArrayList<>();
+	List<DataVar> dataVarList = new ArrayList<>();
 	
 	private ArrayList<Specification> specList = new ArrayList<>();
 	
@@ -174,6 +174,55 @@ public class InteractionFinder {
 		return ctx.equivalentTo(f);
 
 	}
+
+	
+	public void collectVarExpressions(Method<?> mainMethod) {
+		List<MethodElement<?>> children = mainMethod.getChildren();
+		recursiveMethod(children.get(0));	
+		
+	}
+	private void recursiveMethod(MethodElement<?> methodElement){
+		
+			if (methodElement instanceof Method) {
+				System.out.println(methodElement);
+				List a = ((Method) methodElement).getChildren();
+				
+				for(int i=0; i<a.size(); i++){
+					recursiveMethod((MethodElement<?>) a.get(i));
+				}
+			} else {
+				if(methodElement instanceof LocalStoreStatement){
+					varList.add((LocalStoreStatement) methodElement);
+					LocalStoreStatement var = (LocalStoreStatement) methodElement;
+					String name = var.toString();
+					name = name.substring(0,name.length()-3);
+					Conditional<String> value = var.getValue();
+					for ( Entry<String, FeatureExpr> v: value.toMap().entrySet()){
+						DataVar data = new DataVar(name, v.getValue());
+						if(!containsData(data,v.getValue())){
+							dataVarList.add(data);
+							System.out.println("Var: " + data.getName() + " value: " + v.getValue());
+						}
+					}
+			
+				}
+			}
+	}
+
+	private boolean containsData(DataVar data, FeatureExpr featureExpr) {
+		
+		for(int i=0; i<dataVarList.size(); i++){
+			if(dataVarList.get(i).getName().equals(data.getName())){
+				if(!dataVarList.get(i).hascontext(featureExpr)){
+					dataVarList.get(i).setContext(featureExpr);
+					System.out.println("Var: " + dataVarList.get(i).getName() + " value: " + featureExpr);
+				}
+				return true;
+			}
+		}
+		return false;
+	}
+	
 
 
 

@@ -2,10 +2,6 @@ package interaction.dataflow;
 
 import java.util.ArrayList;
 import java.util.List;
-import cmu.conditional.Conditional;
-import cmu.varviz.trace.Trace;
-import de.fosd.typechef.featureexpr.FeatureExpr;
-import de.fosd.typechef.featureexpr.SingleFeatureExpr;
 
 import de.fosd.typechef.featureexpr.FeatureExpr;
 
@@ -20,6 +16,7 @@ public class DataVar {
 	
 	String name;
 	List<FeatureExpr> ctxList = new ArrayList<>();
+	
 	public DataVar(String name, FeatureExpr context) {
 		super();
 		this.name = name;

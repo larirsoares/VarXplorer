@@ -2,7 +2,6 @@ package interaction.dataflow;
 
 import java.util.ArrayList;
 import java.util.List;
-import interaction.dataflow.DataVar;
 
 import cmu.conditional.Conditional;
 import de.fosd.typechef.featureexpr.FeatureExpr;
@@ -14,7 +13,6 @@ import de.fosd.typechef.featureexpr.SingleFeatureExpr;
  * @author Larissa Rocha
  *  
  */
-
 public class DataInteraction {	
 	FeatureExpr A, B, C;
 	List<DataVar> dataVarList = new ArrayList<>();

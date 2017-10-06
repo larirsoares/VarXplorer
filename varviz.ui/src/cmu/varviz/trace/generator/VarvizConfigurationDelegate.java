@@ -6,12 +6,8 @@ import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.io.PrintStream;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
-import java.util.Map.Entry;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
@@ -31,12 +27,10 @@ import org.eclipse.ui.console.MessageConsole;
 import org.eclipse.ui.console.MessageConsoleStream;
 
 import cmu.conditional.Conditional;
-import cmu.varviz.trace.Edge;
-import cmu.varviz.trace.Method;
-import cmu.varviz.trace.MethodElement;
-import cmu.varviz.trace.Statement;
 import cmu.samplej.Collector;
 import cmu.samplej.SampleJMonitor;
+import cmu.varviz.trace.Edge;
+import cmu.varviz.trace.Method;
 import cmu.varviz.trace.Trace;
 import cmu.varviz.trace.filters.And;
 import cmu.varviz.trace.filters.InteractionFilter;
@@ -46,15 +40,9 @@ import cmu.varviz.trace.view.actions.IgnoreContext;
 import cmu.vatrace.ExceptionFilter;
 import de.fosd.typechef.featureexpr.FeatureExpr;
 import de.fosd.typechef.featureexpr.FeatureExprFactory;
-import de.fosd.typechef.featureexpr.SingleFeatureExpr;
 import de.fosd.typechef.featureexpr.bdd.BDDFeatureExprFactory;
 import gov.nasa.jpf.JPF;
-import interaction.Excel;
 import interaction.InteractionFinder;
-import interaction.dataflow.DataFlowControl;
-import interaction.dataflow.DataInteraction;
-import scala.collection.Iterator;
-import scala.collection.immutable.Set;
 
 
 /**
@@ -197,23 +185,19 @@ public class VarvizConfigurationDelegate extends AbstractJavaLaunchConfiguration
 				}
 			}
 			
-			try {
-				//XXX Lari: interaction finder
-				List<Edge> ed = VarvizView.TRACE.getEdges();
-				InteractionFinder finder = new InteractionFinder();
-				finder.getImplications(ed, workingDir);
-	//			Method<?> mainMethod = VarvizView.TRACE.getMain();
-	//			List<MethodElement<?>> children = mainMethod.getChildren();
-	//			for (MethodElement<?> methodElement : children) {
-	//				if (methodElement instanceof Method) {
-	//					
-	//				} else {
-	//					methodElement.getParent();
-	//				}
-	//			}
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
+			//XXX Lari: interaction finder
+//			try {
+			InteractionFinder finder = new InteractionFinder();
+			
+			Method<?> mainMethod = VarvizView.TRACE.getMain();		
+			finder.collectVarExpressions(mainMethod);		
+			
+			List<Edge> ed = VarvizView.TRACE.getEdges();			
+			finder.getImplications(ed, workingDir);
+
+//			} catch (Exception e) {
+//				e.printStackTrace();
+//			}
 			VarvizView.refreshVisuals();
 
 			// check for cancellation
