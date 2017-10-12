@@ -1,28 +1,17 @@
 package interaction.controlflow;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
-import java.util.Map.Entry;
 
 import cmu.conditional.Conditional;
-import cmu.varviz.trace.Edge;
-import cmu.varviz.trace.Statement;
-import cmu.varviz.trace.view.VarvizView;
 import de.fosd.typechef.featureexpr.FeatureExpr;
 import de.fosd.typechef.featureexpr.FeatureExprFactory;
 import de.fosd.typechef.featureexpr.SingleFeatureExpr;
-import interaction.dataflow.DataFlowControl;
-import interaction.dataflow.DataInteraction;
-import interaction.view.InteractGraph;
 import interaction.PairExp;
-import scala.Option;
-import scala.Tuple2;
+import interaction.types.ControInteraction;
 import scala.collection.immutable.Set;
 
 /**
@@ -38,11 +27,14 @@ public class ControlflowControl {
 	List<SingleFeatureExpr> noEffectlist;
 	Map<PairExp, List<String>> hashMap;
 	List<FeatureExpr> expressions;
+	List<ControInteraction> interactionList = new ArrayList<>();
+	
 	
 	public Collection<SingleFeatureExpr> getFeatures() {return features;}
 	public List<SingleFeatureExpr> getNoEffectlist() {return noEffectlist;}
 	public Map<PairExp, List<String>> getHashMap() {return hashMap;}
 	public List<FeatureExpr> getExpressions() {return expressions;}
+	public List<ControInteraction> getInteractionList() {return interactionList;}
 	
 	static {
 		FeatureExprFactory.setDefault(FeatureExprFactory.bdd());
@@ -86,19 +78,22 @@ public class ControlflowControl {
 				FeatureExpr first = feature2.implies(unique.not());
 				FeatureExpr second = feature2.not().implies(unique.not());
 				String phrase = new String("a");
+				
+				PairExp pairAB = new PairExp(feature1, feature2);
+				PairExp pairBA = new PairExp(feature2, feature1);
 									
 				if (first.isTautology()) {
 					System.out.println(Conditional.getCTXString(feature1) + " suppresses " + Conditional.getCTXString(feature2));
 					phrase = Conditional.getCTXString(feature1) + " suppresses " + Conditional.getCTXString(feature2);
+					ControInteraction cI = new ControInteraction(pairAB, phrase);
+					this.interactionList.add(cI);
 				}
 				if (second.isTautology()) {
 					System.out.println(Conditional.getCTXString(feature2) + " enables " + Conditional.getCTXString(feature1));
 					phrase = Conditional.getCTXString(feature2) + " enables " + Conditional.getCTXString(feature1);
-					//phrase = Conditional.getCTXString(feature1) + " enables " + Conditional.getCTXString(feature2);
+					ControInteraction cI = new ControInteraction(pairAB, phrase);
+					this.interactionList.add(cI);
 				}			
-					
-				PairExp pairAB = new PairExp(feature1, feature2);
-				PairExp pairBA = new PairExp(feature2, feature1);
 				
 				if(phrase.equals("a")){
 					//if the pair is no present in the expressions
@@ -207,7 +202,7 @@ public class ControlflowControl {
 	}
 
 	//get all the pairs in the expressions
-	private List<PairExp> getExpressionsPairs(List<FeatureExpr> expressions) {
+	public List<PairExp> getExpressionsPairs(List<FeatureExpr> expressions) {
 		List<PairExp> exprPairs = new ArrayList<>();
 		List<SingleFeatureExpr> flist = new ArrayList<>();
 		List<List> featuresinExpres = new ArrayList<>();

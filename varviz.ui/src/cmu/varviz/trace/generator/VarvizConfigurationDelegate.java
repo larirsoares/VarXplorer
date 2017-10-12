@@ -186,14 +186,12 @@ public class VarvizConfigurationDelegate extends AbstractJavaLaunchConfiguration
 			}
 			
 			//XXX Lari: interaction finder
-//			try {
-			InteractionFinder finder = new InteractionFinder();
+//			try {			
+			Method<?> mainMethod = VarvizView.TRACE.getMain();	
+			List<Edge> ed = VarvizView.TRACE.getEdges();
 			
-			Method<?> mainMethod = VarvizView.TRACE.getMain();		
-			finder.collectVarExpressions(mainMethod);		
-			
-			List<Edge> ed = VarvizView.TRACE.getEdges();			
-			finder.getImplications(ed, workingDir);
+			InteractionFinder finder = new InteractionFinder(mainMethod, ed);
+			finder.findInteractions(workingDir);			
 
 //			} catch (Exception e) {
 //				e.printStackTrace();

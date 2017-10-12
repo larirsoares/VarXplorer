@@ -18,10 +18,13 @@ import de.fosd.typechef.featureexpr.FeatureExpr;
 import de.fosd.typechef.featureexpr.SingleFeatureExpr;
 import interaction.controlflow.ControlflowControl;
 import interaction.dataflow.DataFlowControl;
-import interaction.dataflow.DataInteraction;
 import interaction.dataflow.DataVar;
+import interaction.dataflow.VarInteractionControl;
 import interaction.spec.SpecControl;
 import interaction.spec.Specification;
+import interaction.types.ControInteraction;
+import interaction.types.DataInteraction;
+import interaction.types.VarInteraction;
 import interaction.view.InteractGraph;
 import scala.collection.immutable.Set;
 
@@ -35,15 +38,33 @@ import scala.collection.immutable.Set;
 public class InteractionFinder {
 	
 	List<LocalStoreStatement> varList = new ArrayList<>();
-	List<DataVar> dataVarList = new ArrayList<>();
-	
+	List<DataVar> dataVarList = new ArrayList<>();	//list with all the vars and their expressions
 	private ArrayList<Specification> specList = new ArrayList<>();
 	
+	private Method<?> mainMethod;
+	private List<Edge> edges;
+	
+	public InteractionFinder(Method<?> mainMethod, List<Edge> ed) {
+		super();
+		this.mainMethod = mainMethod;
+		this.edges = ed;
+	}
+
 	public ArrayList<Specification> getSpecList() {
 		return specList;
 	}
-
-	public void getImplications(List<Edge> edges, File workingDir) {
+	
+	public void findInteractions(File workingDir){
+		collectVarExpressions();
+		
+		//to analyze suppress and enable only in vars
+		VarInteractionControl varInt = new VarInteractionControl();
+		List<VarInteraction> interactionsPerVarList = varInt.findInteractionsPerVar(dataVarList);
+		
+		getImplications(workingDir,interactionsPerVarList);
+	}
+	
+	public void getImplications(File workingDir, List<VarInteraction> interactionsPerVarList) {
 		
 		List<String> featureVars = new ArrayList<>();
 		List<DataInteraction> DataInteracList = new ArrayList<>();
@@ -53,12 +74,11 @@ public class InteractionFinder {
 		DataFlowControl dataControl = new DataFlowControl();
 		
 		List<FeatureExpr> expressions = new ArrayList<>();		
-		for (Edge edge : edges) {
+		for (Edge edge : this.edges) {
 			FeatureExpr ctx = edge.getCtx();
 			//System.out.println("edge: " + edge);
-			int a = 1;
-			if (!ctx.isTautology()) {
-				
+			
+			if (!ctx.isTautology()) {				
 					dataControl.getDataInteraction(edge, DataInteracList, END);
 					DataInteracList = dataControl.getDataInteracList();
 				
@@ -79,12 +99,13 @@ public class InteractionFinder {
 		ControlflowControl finder = new ControlflowControl();
 			
 		Map<PairExp, List<String>> hashMap = finder.getInteractionsTable(expressions);	
+		List<ControInteraction> controlFlowInteracList = finder.getInteractionList();
 		//setSpecification(finder, "sign", "addressbook");
 		//setSpecification(finder, "decrypt", "addressbook");
 		//setSpecification(finder, "decrypt", "encrypt");
 		
-		InteractGraph g = new InteractGraph();		
-		g.createGraphInter(hashMap, finder.getFeatures(), finder.getNoEffectlist(), expressions, workingDir, allVars, DataInteracList, specList);	
+		InteractGraph g = new InteractGraph(DataInteracList,interactionsPerVarList,controlFlowInteracList);		
+		g.createGraphInter(hashMap, finder.getFeatures(), finder.getNoEffectlist(), expressions, workingDir, allVars, specList);	
 	}
 
 	private void setSpecification(ControlflowControl finder, String s1, String s2) {
@@ -113,6 +134,10 @@ public class InteractionFinder {
 		String ctxString = Conditional.getCTXString(ctx);
 		featureVars = new ArrayList<>();
 		Statement<?> s = edge.getTo();
+		
+		if(s.equals(eND)){
+			return;
+		}
 
 		if(ctx.size()>1 && checkExpression(edge)) {
 
@@ -183,8 +208,8 @@ public class InteractionFinder {
 	}
 
 	
-	public void collectVarExpressions(Method<?> mainMethod) {
-		List<MethodElement<?>> children = mainMethod.getChildren();
+	public void collectVarExpressions() {
+		List<MethodElement<?>> children = this.mainMethod.getChildren();
 		recursiveMethod(children.get(0));	
 		
 	}

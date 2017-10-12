@@ -8,6 +8,7 @@ import cmu.conditional.Conditional;
 import cmu.varviz.trace.Edge;
 import cmu.varviz.trace.Statement;
 import de.fosd.typechef.featureexpr.FeatureExpr;
+import interaction.types.DataInteraction;
 import scala.collection.immutable.Set;
 
 /**

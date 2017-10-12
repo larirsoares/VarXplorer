@@ -1,4 +1,4 @@
-package interaction.dataflow;
+package interaction.types;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,6 +6,7 @@ import java.util.List;
 import cmu.conditional.Conditional;
 import de.fosd.typechef.featureexpr.FeatureExpr;
 import de.fosd.typechef.featureexpr.SingleFeatureExpr;
+import interaction.dataflow.DataVar;
 
 /**
  * has...
