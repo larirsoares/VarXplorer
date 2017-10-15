@@ -28,6 +28,18 @@ public class VarInteractionControl {
 		}
 		return intList;
 	}
+	
+	public List<VarInteraction> findGeneralInteractions(List<DataVar> dataVarList) {
+		Collection<SingleFeatureExpr> features = Conditional.features.values();//the whole set of features	
+
+		//creating the whole set of exp
+		List<FeatureExpr> expressions = new ArrayList<>();
+		for(DataVar var: dataVarList){
+			expressions.addAll( var.getCtxList());
+		}
+		getRelations(features, expressions, "");
+		return intList;
+	}
 
 	static FeatureExpr createUnique(SingleFeatureExpr feature, List<FeatureExpr> contexts) {
 		FeatureExpr unique = FeatureExprFactory.False();

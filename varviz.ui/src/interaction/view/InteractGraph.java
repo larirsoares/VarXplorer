@@ -36,18 +36,21 @@ public class InteractGraph {
 	private List<VarInteraction> interactionsPerVarList;
 	private List<ControInteraction> controlFlowInteracList;
 	private boolean blackedges;
+	private boolean justControlFlow;
 	
 
 	public InteractGraph(List<DataInteraction> dataInteracList, List<VarInteraction> interactionsPerVarList,
 			List<ControInteraction> controlFlowInteracList) {
 		this.controlFlowInteracList = controlFlowInteracList;
 		this.interactionsPerVarList = interactionsPerVarList;
-		this.interactionsPerVarList = null;
+		//this.interactionsPerVarList = null;
 		this.dataInteracList = dataInteracList;
 		//this.dataInteracList = null;
 		
 		//to generate the basic interaction graph only with black edge (control and data edges)
 		this.blackedges = false;
+		//data in black but control flow activated
+		this.justControlFlow = false;
 	}
 
 	public void createGraphInter(Map<PairExp, List<String>> hashMap, Collection<SingleFeatureExpr> features, List<SingleFeatureExpr> noEffectlist, List<FeatureExpr> expressions, File workingDir, List<List> allVars, ArrayList<Specification> specList){
@@ -95,7 +98,10 @@ public class InteractGraph {
 							continue;
 						}	
 						
-						if(this.blackedges){
+						if(this.blackedges && this.justControlFlow){
+							drawEnable(allVars, expV, A, B, exp, concat, g, drawninteractions);
+							continue;
+						}else if (this.blackedges){
 							drawNormalInteraction(allVars, expV, A, B, exp, concat, g, drawninteractions);
 						}else{
 							drawEnable(allVars, expV, A, B, exp, concat, g, drawninteractions);
@@ -202,9 +208,10 @@ public class InteractGraph {
 	private void drawEnable(List<List> allVars, String expV, String A, String B, String exp, String concat, Graph g, List<String> drawninteractions) {
 		
 		String shownVars = "";
-		if(allVars!=null){
+		if(allVars!=null && !this.justControlFlow){
 			shownVars = getVarstoShow(allVars, expV, A, B);
 		}
+
 		
 		System.out.println("Overwritten vars from [" + A + "," + B + "] =" + shownVars);
 		
@@ -279,7 +286,8 @@ public class InteractGraph {
 				}
 			}
 		}
-		
+		//comment here to show the vars
+		//shownVars = "";
 		return shownVars;
 	}
 
@@ -410,6 +418,8 @@ public class InteractGraph {
 				shownVars += "\n";
 			i++;
 		}
+		//comment here to show the vars
+		//shownVars = "";
 		return shownVars;	
 		
 	}

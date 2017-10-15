@@ -19,6 +19,7 @@ import de.fosd.typechef.featureexpr.SingleFeatureExpr;
 import interaction.controlflow.ControlflowControl;
 import interaction.dataflow.DataFlowControl;
 import interaction.dataflow.DataVar;
+import interaction.dataflow.GeneralDataInteraction;
 import interaction.dataflow.VarInteractionControl;
 import interaction.spec.SpecControl;
 import interaction.spec.Specification;
@@ -55,12 +56,19 @@ public class InteractionFinder {
 	}
 	
 	public void findInteractions(File workingDir){
+		//gets all the variables and its context (presence conditions)
 		collectVarExpressions();
+		
+		int a = 0;
+		//get data flow interactions in general
+		GeneralDataInteraction generalDataI = new GeneralDataInteraction(dataVarList);
+		List<VarInteraction> generalInteractionDataList = generalDataI.getGeneralInte();
 		
 		//to analyze suppress and enable only in vars
 		VarInteractionControl varInt = new VarInteractionControl();
 		List<VarInteraction> interactionsPerVarList = varInt.findInteractionsPerVar(dataVarList);
 		
+		//control and data flow analysis
 		getImplications(workingDir,interactionsPerVarList);
 	}
 	
@@ -129,6 +137,7 @@ public class InteractionFinder {
 		
 	}
 
+	//method to get the var of the control flow
 	private void getFeatureVars(FeatureExpr ctx, Edge edge, List<String> featureVars, List<List> allVars, Statement<?> eND) {
 
 		String ctxString = Conditional.getCTXString(ctx);
@@ -187,6 +196,7 @@ public class InteractionFinder {
 
 	}
 
+	//check if the expression is an AND between features to get the variables of control-flow
 	private Boolean checkExpression(Edge edge) {
 		FeatureExpr ctx = edge.getCtx();
 		Statement<?> s = edge.getTo();
@@ -207,7 +217,7 @@ public class InteractionFinder {
 
 	}
 
-	
+	//getting all the variables of the trace
 	public void collectVarExpressions() {
 		List<MethodElement<?>> children = this.mainMethod.getChildren();
 		recursiveMethod(children.get(0));	
@@ -241,6 +251,7 @@ public class InteractionFinder {
 			}
 	}
 
+	//used by the recursive method to see if dataVarList has the variable and its context
 	private boolean containsData(DataVar data, FeatureExpr featureExpr) {
 		
 		for(int i=0; i<dataVarList.size(); i++){
