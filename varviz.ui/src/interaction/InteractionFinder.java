@@ -13,6 +13,7 @@ import cmu.varviz.trace.Method;
 import cmu.varviz.trace.MethodElement;
 import cmu.varviz.trace.Statement;
 import cmu.varviz.trace.view.VarvizView;
+import cmu.vatrace.FieldPutStatement;
 import cmu.vatrace.LocalStoreStatement;
 import de.fosd.typechef.featureexpr.FeatureExpr;
 import de.fosd.typechef.featureexpr.SingleFeatureExpr;
@@ -59,10 +60,9 @@ public class InteractionFinder {
 		//gets all the variables and its context (presence conditions)
 		collectVarExpressions();
 		
-		int a = 0;
 		//get data flow interactions in general
-		GeneralDataInteraction generalDataI = new GeneralDataInteraction(dataVarList);
-		List<VarInteraction> generalInteractionDataList = generalDataI.getGeneralInte();
+		GeneralDataInteraction generalDataI = new GeneralDataInteraction();
+		List<VarInteraction> generalInteractionDataList = generalDataI.getDATAGeneralInte(dataVarList);
 		
 		//to analyze suppress and enable only in vars
 		VarInteractionControl varInt = new VarInteractionControl();
@@ -111,6 +111,10 @@ public class InteractionFinder {
 		//setSpecification(finder, "sign", "addressbook");
 		//setSpecification(finder, "decrypt", "addressbook");
 		//setSpecification(finder, "decrypt", "encrypt");
+		
+		//analyzing all interactions together: control + data exp
+		GeneralDataInteraction generalDataI = new GeneralDataInteraction();
+		List<VarInteraction> generalInteractionALLList = generalDataI.getALLInte(expressions, dataVarList);
 		
 		InteractGraph g = new InteractGraph(DataInteracList,interactionsPerVarList,controlFlowInteracList);		
 		g.createGraphInter(hashMap, finder.getFeatures(), finder.getNoEffectlist(), expressions, workingDir, allVars, specList);	
@@ -233,9 +237,9 @@ public class InteractionFinder {
 					recursiveMethod((MethodElement<?>) a.get(i));
 				}
 			} else {
-				if(methodElement instanceof LocalStoreStatement){
-					varList.add((LocalStoreStatement) methodElement);
-					LocalStoreStatement var = (LocalStoreStatement) methodElement;
+				if(methodElement instanceof LocalStoreStatement || methodElement instanceof FieldPutStatement){
+					//varList.add((LocalStoreStatement) methodElement);
+					Statement var = (Statement) methodElement;
 					String name = var.toString();
 					name = name.substring(0,name.length()-3);
 					Conditional<String> value = var.getValue();

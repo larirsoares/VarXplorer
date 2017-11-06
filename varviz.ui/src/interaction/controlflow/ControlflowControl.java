@@ -83,14 +83,14 @@ public class ControlflowControl {
 				PairExp pairBA = new PairExp(feature2, feature1);
 									
 				if (first.isTautology()) {
-					System.out.println(Conditional.getCTXString(feature1) + " suppresses " + Conditional.getCTXString(feature2));
-					phrase = Conditional.getCTXString(feature1) + " suppresses " + Conditional.getCTXString(feature2);
+					System.out.println(Conditional.getCTXString(feature2) + " suppresses " + Conditional.getCTXString(feature1));
+					phrase = Conditional.getCTXString(feature2) + " suppresses " + Conditional.getCTXString(feature1);
 					ControInteraction cI = new ControInteraction(pairAB, phrase);
 					this.interactionList.add(cI);
 				}
 				if (second.isTautology()) {
-					System.out.println(Conditional.getCTXString(feature2) + " enables " + Conditional.getCTXString(feature1));
-					phrase = Conditional.getCTXString(feature2) + " enables " + Conditional.getCTXString(feature1);
+					System.out.println(Conditional.getCTXString(feature1) + " requires " + Conditional.getCTXString(feature2));
+					phrase = Conditional.getCTXString(feature1) + " requires " + Conditional.getCTXString(feature2);
 					ControInteraction cI = new ControInteraction(pairAB, phrase);
 					this.interactionList.add(cI);
 				}			

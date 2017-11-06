@@ -43,7 +43,7 @@ public class InteractGraph {
 			List<ControInteraction> controlFlowInteracList) {
 		this.controlFlowInteracList = controlFlowInteracList;
 		this.interactionsPerVarList = interactionsPerVarList;
-		//this.interactionsPerVarList = null;
+		this.interactionsPerVarList = null;
 		this.dataInteracList = dataInteracList;
 		//this.dataInteracList = null;
 		
@@ -93,7 +93,7 @@ public class InteractGraph {
 						}					
 						drawNormalInteraction(allVars, expV, A, B, exp, concat, g, drawninteractions);
 					}
-					else if(exp.contains("enables")){
+					else if(exp.contains("requires")){
 						if(checkSpec(specList, A, B)){
 							continue;
 						}	
@@ -145,7 +145,7 @@ public class InteractGraph {
 			
 		System.out.println("Overwritten vars from [" + A + "," + B + "] =" + shownVars);
 		
-		g.addEdge(new Edge(A,B).setArrowHead(ArrowType.none).setLabel(shownVars).setFontSize(10).setFontColor(Color.X11.black));							
+		g.addEdge(new Edge(A,B).setArrowHead(ArrowType.none).setLabel(shownVars).setFontSize(14).setFontColor(Color.X11.black));							
 		drawninteractions.add(A+","+B);
 		
 	}
@@ -164,7 +164,7 @@ public class InteractGraph {
 		if(exp.startsWith(concat)){
 			Edge edge = new Edge(B,A);
 			edge.setColor(Color.X11.red).setArrowHead(ArrowType.empty);
-			edge.setFontSize(10).setLabel(shownVars);
+			edge.setFontSize(14).setLabel(shownVars);
 			edge.setLabelTooltip(shownVars);
 			g.addEdge(edge);
 			drawninteractions.add(A+","+B);
@@ -172,7 +172,7 @@ public class InteractGraph {
 		}else{
 			Edge edge = new Edge(A,B);
 			edge.setColor(Color.X11.red).setArrowHead(ArrowType.empty);
-			edge.setFontSize(10).setLabel(shownVars);
+			edge.setFontSize(14).setLabel(shownVars);
 			edge.setLabelTooltip(shownVars);
 			g.addEdge(edge);
 			drawninteractions.add(A+","+B);
@@ -216,23 +216,23 @@ public class InteractGraph {
 		System.out.println("Overwritten vars from [" + A + "," + B + "] =" + shownVars);
 		
 		if(shownVars!=""){
-			shownVars = "enables \n" + shownVars;
+			shownVars = "requires \n" + shownVars;
 		}else{
-			shownVars = "enables";
+			shownVars = "requires";
 		}
 			
 			if(exp.startsWith(concat)){
 				Edge edge = new Edge(B,A);
 				edge.setColor(Color.X11.green).setArrowHead(ArrowType.empty);
 				//edge.setLabel("enables \n" + shownVars).setFontSize(10);
-				edge.setLabel(shownVars).setFontSize(10);
+				edge.setLabel(shownVars).setFontSize(14);
 				g.addEdge(edge);
 				drawninteractions.add(A+","+B);
 				//g.addEdge(new Edge(B,A).setColor(Color.X11.green).setArrowHead(ArrowType.empty).setLabel("enables").setFontSize(10));
 			}else{
 				Edge edge = new Edge(A,B);
 				edge.setColor(Color.X11.green).setArrowHead(ArrowType.empty);
-				edge.setLabel("enables \n" + shownVars).setFontSize(10);
+				edge.setLabel(shownVars).setFontSize(14);
 				g.addEdge(edge);
 				drawninteractions.add(A+","+B);
 				//g.addEdge(new Edge(A,B).setColor(Color.X11.green).setArrowHead(ArrowType.empty).setLabel("enables").setFontSize(10));
@@ -436,17 +436,17 @@ public class InteractGraph {
 			if(type.contains("suppress")){
 				shownVars = "suppresses \n" + shownVars;									
 				edge.setColor(Color.X11.red).setStyle(Style.Edge.dashed).setArrowHead(ArrowType.empty);
-			}else if (type.contains("enable")){
-				shownVars = "enables \n" + shownVars;									
+			}else if (type.contains("require")){
+				shownVars = "requires \n" + shownVars;									
 				edge.setColor(Color.X11.green).setStyle(Style.Edge.dashed).setArrowHead(ArrowType.empty);
 			}
-			edge.setFontSize(10).setLabel(shownVars).setFontColor(Color.X11.black);
+			edge.setFontSize(14).setLabel(shownVars).setFontColor(Color.X11.black);
 			g.addEdge(edge);
 					
 		}else{	
 			Edge edge = new Edge(A,B);
 			edge.setColor(Color.X11.orange).setStyle(Style.Edge.dashed).setArrowHead(ArrowType.none);
-			edge.setFontSize(10).setLabel(shownVars).setFontColor(Color.X11.black);
+			edge.setFontSize(14).setLabel(shownVars).setFontColor(Color.X11.black);
 			g.addEdge(edge);
 		}
 		
@@ -468,12 +468,12 @@ public class InteractGraph {
 						return b+" "+"suppress";
 					}
 				}
-				else if(varList.getExp().contains("enable")){
+				else if(varList.getExp().contains("require")){
 					if(varList.getExp().startsWith(a)){
-						return a+" "+"enable";
+						return a+" "+"requires";
 					}
 					else{
-						return b+" "+"enable";
+						return b+" "+"requires";
 					}
 				}
 			}

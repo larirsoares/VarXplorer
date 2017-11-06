@@ -19,6 +19,7 @@ public class VarInteractionControl {
 		Collection<SingleFeatureExpr> features = Conditional.features.values();//the whole set of features	
 		//ControlflowControl cflow = new ControlflowControl();
 		//getting each variable
+		int a = 0;
 		for(DataVar var: dataVarList){
 			String name = var.getName();
 			List<FeatureExpr> expressions = var.getCtxList();
@@ -29,7 +30,7 @@ public class VarInteractionControl {
 		return intList;
 	}
 	
-	public List<VarInteraction> findGeneralInteractions(List<DataVar> dataVarList) {
+	public List<VarInteraction> findGeneralDataInteractions(List<DataVar> dataVarList) {
 		Collection<SingleFeatureExpr> features = Conditional.features.values();//the whole set of features	
 
 		//creating the whole set of exp
@@ -37,6 +38,17 @@ public class VarInteractionControl {
 		for(DataVar var: dataVarList){
 			expressions.addAll( var.getCtxList());
 		}
+		getRelations(features, expressions, "");
+		return intList;
+	}
+	
+	public List<VarInteraction> findAllInteractions(List<FeatureExpr> expressions) {
+		Collection<SingleFeatureExpr> features = Conditional.features.values();//the whole set of features	
+
+		//creating the whole set of exp
+		//List<FeatureExpr> expressions = new ArrayList<>();
+		
+
 		getRelations(features, expressions, "");
 		return intList;
 	}
@@ -81,8 +93,8 @@ public class VarInteractionControl {
 					addphrase(phrase, pairAB, name);
 				}
 				if (second.isTautology()) {
-					System.out.println(Conditional.getCTXString(feature2) + " enables " + Conditional.getCTXString(feature1));
-					phrase = Conditional.getCTXString(feature2) + " enables " + Conditional.getCTXString(feature1);
+					System.out.println(Conditional.getCTXString(feature1) + " requires " + Conditional.getCTXString(feature2));
+					phrase = Conditional.getCTXString(feature1) + " requires " + Conditional.getCTXString(feature2);
 					addphrase(phrase, pairAB, name);
 				}
 		
