@@ -19,7 +19,7 @@ public class VarInteractionControl {
 		Collection<SingleFeatureExpr> features = Conditional.features.values();//the whole set of features	
 		//ControlflowControl cflow = new ControlflowControl();
 		//getting each variable
-		int a = 0;
+		//int a = 0;
 		for(DataVar var: dataVarList){
 			String name = var.getName();
 			List<FeatureExpr> expressions = var.getCtxList();

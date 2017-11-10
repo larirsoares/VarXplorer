@@ -12,13 +12,11 @@ import cmu.varviz.trace.Edge;
 import cmu.varviz.trace.Method;
 import cmu.varviz.trace.MethodElement;
 import cmu.varviz.trace.Statement;
-import cmu.varviz.trace.view.VarvizView;
 import cmu.vatrace.FieldPutStatement;
 import cmu.vatrace.LocalStoreStatement;
 import de.fosd.typechef.featureexpr.FeatureExpr;
 import de.fosd.typechef.featureexpr.SingleFeatureExpr;
 import interaction.controlflow.ControlflowControl;
-import interaction.dataflow.DataFlowControl;
 import interaction.dataflow.DataVar;
 import interaction.dataflow.GeneralDataInteraction;
 import interaction.dataflow.VarInteractionControl;
@@ -41,6 +39,7 @@ public class InteractionFinder {
 	
 	List<LocalStoreStatement> varList = new ArrayList<>();
 	List<DataVar> dataVarList = new ArrayList<>();	//list with all the vars and their expressions
+	List<FeatureExpr> dataExpressions = new ArrayList<>();//list with all data expressions
 	private ArrayList<Specification> specList = new ArrayList<>();
 	
 	private Method<?> mainMethod;
@@ -60,6 +59,11 @@ public class InteractionFinder {
 		//gets all the variables and its context (presence conditions)
 		collectVarExpressions();
 		
+		//getting all expressions from data
+		for(DataVar var: dataVarList){
+			dataExpressions.addAll( var.getCtxList());
+		}
+		
 		//get data flow interactions in general
 		GeneralDataInteraction generalDataI = new GeneralDataInteraction();
 		List<VarInteraction> generalInteractionDataList = generalDataI.getDATAGeneralInte(dataVarList);
@@ -69,57 +73,105 @@ public class InteractionFinder {
 		List<VarInteraction> interactionsPerVarList = varInt.findInteractionsPerVar(dataVarList);
 		
 		//control and data flow analysis
-		getImplications(workingDir,interactionsPerVarList);
+		getImplications(workingDir,interactionsPerVarList,generalInteractionDataList);
 	}
 	
-	public void getImplications(File workingDir, List<VarInteraction> interactionsPerVarList) {
-		
-		List<String> featureVars = new ArrayList<>();
+//	public void getImplications(File workingDir, List<VarInteraction> interactionsPerVarList, List<VarInteraction> generalInteractionDataList) {
+//		
+//		List<String> featureVars = new ArrayList<>();
+//		List<DataInteraction> DataInteracList = new ArrayList<>();
+//		List<List> allVars = new ArrayList<>();
+//		Statement<?> END = VarvizView.TRACE.getEND();
+//		
+//		DataFlowControl dataControl = new DataFlowControl();
+//		
+//		List<FeatureExpr> expressions = new ArrayList<>();		
+//		for (Edge edge : this.edges) {
+//			FeatureExpr ctx = edge.getCtx();
+//			//System.out.println("edge: " + edge);
+//			
+//			if (!ctx.isTautology()) {				
+//					dataControl.getDataInteraction(edge, DataInteracList, END);
+//					DataInteracList = dataControl.getDataInteracList();
+//				
+//				//acho que talvez msm se já conter a expressao tem tb q testar se a variavel já existe
+//				//tenho que rever isso aqui
+//				if (!expressions.contains(ctx)) {
+//					expressions.add(ctx);
+//					System.out.println(ctx);			
+//					
+//					getFeatureVars(ctx, edge, featureVars, allVars, END);
+//				}else{
+//					System.out.println(ctx);			
+//					
+//					getFeatureVars(ctx, edge, featureVars, allVars, END);
+//				}
+//			}
+//		}
+//			
+//		//analyzing all interactions together: control + data exp
+//		GeneralDataInteraction generalDataI = new GeneralDataInteraction();
+//		List<VarInteraction> generalInteractionALLList = generalDataI.getALLInte(expressions, dataVarList);
+//		List<FeatureExpr> allAxpressions = new ArrayList<>();	
+//		allAxpressions = generalDataI.getExpressionALL();
+//		
+//		ControlflowControl finder = new ControlflowControl();
+//		//Map<PairExp, List<String>> hashMap = finder.getInteractionsTable(expressions);
+//		Map<PairExp, List<String>> hashMap = finder.getInteractionsTable(allAxpressions);//has everybody that interacts
+//		
+//		//relationships from presence conditions
+//		List<ControInteraction> controlFlowInteracList = finder.getInteractionList();
+//		
+//		//Examples of specifications	
+//		//setSpecification(finder, "sign", "addressbook");
+//		//setSpecification(finder, "decrypt", "addressbook");
+//		//setSpecification(finder, "decrypt", "encrypt");
+//	
+//		
+//		InteractGraph g = new InteractGraph(DataInteracList,interactionsPerVarList,controlFlowInteracList);		
+//		g.createGraphInter(hashMap, finder.getFeatures(), finder.getNoEffectlist(), expressions, workingDir, allVars, specList);	
+//	}
+
+	public void getImplications(File workingDir, List<VarInteraction> interactionsPerVarList, List<VarInteraction> generalInteractionDataList) {
+		//apagar depois
 		List<DataInteraction> DataInteracList = new ArrayList<>();
 		List<List> allVars = new ArrayList<>();
-		Statement<?> END = VarvizView.TRACE.getEND();
-		
-		DataFlowControl dataControl = new DataFlowControl();
 		
 		List<FeatureExpr> expressions = new ArrayList<>();		
 		for (Edge edge : this.edges) {
 			FeatureExpr ctx = edge.getCtx();
-			//System.out.println("edge: " + edge);
 			
 			if (!ctx.isTautology()) {				
-					dataControl.getDataInteraction(edge, DataInteracList, END);
-					DataInteracList = dataControl.getDataInteracList();
-				
-				//acho que talvez msm se já conter a expressao tem tb q testar se a variavel já existe
-				//tenho que rever isso aqui
 				if (!expressions.contains(ctx)) {
 					expressions.add(ctx);
-					System.out.println(ctx);			
-					
-					getFeatureVars(ctx, edge, featureVars, allVars, END);
-				}else{
-					System.out.println(ctx);			
-					
-					getFeatureVars(ctx, edge, featureVars, allVars, END);
+					System.out.println(ctx);								
 				}
 			}
 		}
-		ControlflowControl finder = new ControlflowControl();
 			
-		Map<PairExp, List<String>> hashMap = finder.getInteractionsTable(expressions);	
-		List<ControInteraction> controlFlowInteracList = finder.getInteractionList();
-		//setSpecification(finder, "sign", "addressbook");
-		//setSpecification(finder, "decrypt", "addressbook");
-		//setSpecification(finder, "decrypt", "encrypt");
-		
 		//analyzing all interactions together: control + data exp
 		GeneralDataInteraction generalDataI = new GeneralDataInteraction();
 		List<VarInteraction> generalInteractionALLList = generalDataI.getALLInte(expressions, dataVarList);
+		List<FeatureExpr> allAxpressions = new ArrayList<>();	
+		allAxpressions = generalDataI.getExpressionALL();
+		
+		ControlflowControl finder = new ControlflowControl();
+		//Map<PairExp, List<String>> hashMap = finder.getInteractionsTable(expressions);
+		Map<PairExp, List<String>> hashMap = finder.getInteractionsTable(allAxpressions);//has everybody that interacts
+		
+		//relationships from presence conditions
+		List<ControInteraction> controlFlowInteracList = finder.getInteractionList();
+		
+		//Examples of specifications	
+		setSpecification(finder, "S", "F");
+		//setSpecification(finder, "decrypt", "addressbook");
+		//setSpecification(finder, "decrypt", "encrypt");
+	
 		
 		InteractGraph g = new InteractGraph(DataInteracList,interactionsPerVarList,controlFlowInteracList);		
 		g.createGraphInter(hashMap, finder.getFeatures(), finder.getNoEffectlist(), expressions, workingDir, allVars, specList);	
 	}
-
+	
 	private void setSpecification(ControlflowControl finder, String s1, String s2) {
 		SpecControl specControl = new SpecControl();
 		Collection<SingleFeatureExpr> feat = finder.getFeatures();

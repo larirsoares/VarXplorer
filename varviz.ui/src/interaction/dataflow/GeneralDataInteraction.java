@@ -8,6 +8,7 @@ import interaction.types.VarInteraction;
 
 public class GeneralDataInteraction {
 	
+	private List<FeatureExpr> expressionALL = new ArrayList<>();
 	//private List<DataVar> dataVarList;
 
 
@@ -15,6 +16,10 @@ public class GeneralDataInteraction {
 //		this.dataVarList = dataVarList;
 //	}
 	
+	public List<FeatureExpr> getExpressionALL() {
+		return expressionALL;
+	}
+
 	public List<VarInteraction> getDATAGeneralInte(List<DataVar> dataVarList){
 		
 		VarInteractionControl varInt = new VarInteractionControl();
@@ -28,7 +33,7 @@ public class GeneralDataInteraction {
 		
 		VarInteractionControl varInt = new VarInteractionControl();
 		
-		List<FeatureExpr> expressionALL = new ArrayList<>();
+		expressionALL =  new ArrayList<>();
 		expressionALL.addAll(expression);
 		
 		for(DataVar var: dataVarList){
