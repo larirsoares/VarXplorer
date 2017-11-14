@@ -25,6 +25,7 @@ import interaction.spec.Specification;
 import interaction.types.ControInteraction;
 import interaction.types.DataInteraction;
 import interaction.types.VarInteraction;
+import interaction.view.DotGraph;
 import interaction.view.InteractGraph;
 import scala.collection.immutable.Set;
 
@@ -163,17 +164,109 @@ public class InteractionFinder {
 		List<ControInteraction> controlFlowInteracList = finder.getInteractionList();
 		
 		//Examples of specifications	
-		setSpecification(finder, "S", "F");
+		setAllow(finder, "F", "W");
+		//setReqAllow(finder, "F", "W", "String c");
+		//setReqAllow(finder, "F", "W", "String weather");
+		setSupAllow(finder, "S", "F", "String c");
 		//setSpecification(finder, "decrypt", "addressbook");
 		//setSpecification(finder, "decrypt", "encrypt");
 	
 		
-		InteractGraph g = new InteractGraph(DataInteracList,interactionsPerVarList,controlFlowInteracList);		
-		g.createGraphInter(hashMap, finder.getFeatures(), finder.getNoEffectlist(), expressions, workingDir, allVars, specList);	
+		InteractGraph g = new InteractGraph(interactionsPerVarList, specList, workingDir);		
+		g.createGraphInter(hashMap, finder.getFeatures(), finder.getNoEffectlist(), expressions);	
+		
+		InteractionCreator resultingGraph = new InteractionCreator(hashMap, finder.getFeatures(), finder.getNoEffectlist(), expressions,
+				interactionsPerVarList, specList);
+		ArrayList<Interaction> finalList = resultingGraph.getInteractionsToShow();
+		printFinalList(finalList, resultingGraph);
+		
+		DotGraph dot = new DotGraph();
+		dot.createGraph(finalList, resultingGraph, workingDir, expressions);
 	}
 	
-	private void setSpecification(ControlflowControl finder, String s1, String s2) {
+
+
+	private void printFinalList(ArrayList<Interaction> finalList, InteractionCreator resultingGraph) {
+		System.out.println("");
+		System.out.println("---------------All Interactions---------------");
+		for(Interaction inte: finalList){
+			if(inte.getRelations()!=null){
+				for(Relationship r: inte.getRelations()){
+					System.out.print(Conditional.getCTXString(inte.getPair().getA()) + " " + r.getRelation() + " " + Conditional.getCTXString(inte.getPair().getB()));
+					if(r.getVars()!=null){
+						System.out.print(": vars ");
+						for(String var: r.getVars()){
+							System.out.print(var + ", ");
+						}
+					}
+				}
+				System.out.println("");
+			}
+			else{
+				System.out.println(Conditional.getCTXString(inte.getPair().getA()) + " , " + Conditional.getCTXString(inte.getPair().getB()));
+			}
+			
+		}
+		
+		System.out.println("-> No interacting: " );
+		for(SingleFeatureExpr feature: resultingGraph.getDoNotInterctList()){
+			System.out.print(Conditional.getCTXString(feature)+ ", ");
+		}
+		System.out.println("\n-> No effect: ");
+		for(SingleFeatureExpr feature: resultingGraph.getNoEffectlist()){
+			System.out.print(Conditional.getCTXString(feature)+ ", ");
+		}
+		
+		//printing interactions removed from spec
+		System.out.println("\n------> Removed from spec:");
+		if(resultingGraph.getRemovedInteractions() !=null){
+			for(Interaction inte: resultingGraph.getRemovedInteractions()){
+				if(inte.getRelations()!=null){
+					for(Relationship r: inte.getRelations()){
+						System.out.print(Conditional.getCTXString(inte.getPair().getA()) + " " + r.getRelation() + " " + Conditional.getCTXString(inte.getPair().getB()));
+						if(r.getVars()!=null){
+							System.out.print(": vars ");
+							for(String var: r.getVars()){
+								System.out.print(var + ", ");
+							}
+						}
+					}
+					System.out.println("");
+				}else{
+					System.out.println(Conditional.getCTXString(inte.getPair().getA()) + " , " + Conditional.getCTXString(inte.getPair().getB()));
+				}
+			}
+		}
+	
+	}
+
+	private void setAllow(ControlflowControl finder, String s1, String s2) {
 		SpecControl specControl = new SpecControl();
+			
+		SingleFeatureExpr[] a = getFeaturesSpec(finder, s1, s2);
+		specList.add(specControl.createAllow(a[0], a[1]));
+		
+	}
+	
+	private void setReqAllow(ControlflowControl finder, String s1, String s2, String var) {
+		SpecControl specControl = new SpecControl();
+		
+		SingleFeatureExpr[] a = getFeaturesSpec(finder, s1, s2);
+		Specification spec = specControl.createAllowReq(a[0], a[1], var);
+		specList.add(spec);
+	
+	}
+	
+	private void setSupAllow(ControlflowControl finder, String s1, String s2, String var) {
+		SpecControl specControl = new SpecControl();
+		
+		SingleFeatureExpr[] a = getFeaturesSpec(finder, s1, s2);
+		Specification spec = specControl.createAllowSup(a[0], a[1], var);
+		specList.add(spec);
+	
+	}
+
+	private SingleFeatureExpr[] getFeaturesSpec(ControlflowControl finder, String s1, String s2) {
 		Collection<SingleFeatureExpr> feat = finder.getFeatures();
 		
 		SingleFeatureExpr[] a = new SingleFeatureExpr[2];
@@ -189,10 +282,10 @@ public class InteractionFinder {
 				i++;
 			}
 		}
-		specList.add(specControl.createAllow(a[0], a[1]));
+		return a;
 		
 	}
-
+	
 	//method to get the var of the control flow
 	private void getFeatureVars(FeatureExpr ctx, Edge edge, List<String> featureVars, List<List> allVars, Statement<?> eND) {
 

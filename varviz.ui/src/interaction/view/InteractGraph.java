@@ -18,8 +18,8 @@ import info.leadinglight.jdot.enums.Color;
 import info.leadinglight.jdot.enums.Style;
 import interaction.PairExp;
 import interaction.spec.Specification;
-import interaction.types.ControInteraction;
-import interaction.types.DataInteraction;
+import interaction.spec.Specification.Relationship;
+import interaction.spec.Specification.Type;
 import interaction.types.VarInteraction;
 /**
  * has...
@@ -30,21 +30,18 @@ import interaction.types.VarInteraction;
 
 
 public class InteractGraph {
-	ArrayList<Specification> SpecList;
-	//private List<DataInteraction> dataInteracList;
+	private ArrayList<Specification> specList;
 	private List<VarInteraction> interactionsPerVarList;
-	private List<ControInteraction> controlFlowInteracList;
+	private File workingDir;
 	private boolean blackedges;
 	private boolean justControlFlow;
 	
 
-	public InteractGraph(List<DataInteraction> dataInteracList, List<VarInteraction> interactionsPerVarList,
-			List<ControInteraction> controlFlowInteracList) {
-		this.controlFlowInteracList = controlFlowInteracList;
+	public InteractGraph(List<VarInteraction> interactionsPerVarList, ArrayList<Specification> specList, File workingDir) {
 		this.interactionsPerVarList = interactionsPerVarList;
 		//this.interactionsPerVarList = null;
-		//this.dataInteracList = dataInteracList;
-		//this.dataInteracList = null;
+		this.specList = new ArrayList<Specification>(specList);
+		this.workingDir = workingDir;
 		
 		//to generate the basic interaction graph only with black edge (control and data edges)
 		this.blackedges = false;
@@ -52,15 +49,33 @@ public class InteractGraph {
 		this.justControlFlow = false;
 	}
 
-	public void createGraphInter(Map<PairExp, List<String>> hashMap, Collection<SingleFeatureExpr> features, List<SingleFeatureExpr> noEffectlist, List<FeatureExpr> expressions, File workingDir, List<List> allVars, ArrayList<Specification> specList){
-		
-		//allVars = null;
+	private boolean treatSpec(Entry<PairExp, List<String>> pair, Map<PairExp, List<String>> hashMap) {
+		for (Specification spec: specList){
+			if(spec.getPair().equals(pair.getKey())){
+				
+				if(spec.getType().equals(Type.Allow)){
+					if(spec.getRelation() == null){
+						hashMap.remove(pair);
+						return true;
+					}else{
+						if(spec.getRelation().equals(Relationship.Require)){
+							
+						}else{
+							
+						}
+					}
+				}
+			}
+		}
+		return false;
+	}
+
+	public void createGraphInter(Map<PairExp, List<String>> hashMap, Collection<SingleFeatureExpr> features, List<SingleFeatureExpr> noEffectlist, List<FeatureExpr> expressions){
 		
 		Graph g = new Graph("FeatureInteractions");		
 		String A = "";
 		String B = "";
 		List<String> drawninteractions = new ArrayList<>();
-		SpecList = new ArrayList<Specification>(specList);
 		
 		for (SingleFeatureExpr feature1 : features) {
 			 String f = Conditional.getCTXString(feature1);
@@ -76,12 +91,17 @@ public class InteractGraph {
 			
 				A = Conditional.getCTXString(pair.getKey().getA());
 				B = Conditional.getCTXString(pair.getKey().getB());
-			//	System.out.println("Pair = [" + A + "," + B + "= " + pair.getValue() + "]");
+			
+				
+				
 				String concat = B;
 				
 				List<String> l = pair.getValue();
 				for(String exp: l){
 					//System.out.println("expr: " + exp);
+					if(treatSpec(pair, hashMap)){
+						continue;
+					}
 				
 					if(exp.contains("not interact")){
 						continue;
@@ -157,7 +177,7 @@ public class InteractGraph {
 		
 		for(VarInteraction Interaction: this.interactionsPerVarList){
 			PairExp pair = Interaction.getPair();	
-			if(checkSpec(SpecList, A, B)){
+			if(checkSpec(specList, A, B)){
 				continue;
 			}
 			
