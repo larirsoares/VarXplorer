@@ -28,7 +28,7 @@ public class InteractionCreator {
 	private ArrayList<Interaction> removedInteractions;
 
 
-	
+	public Collection<SingleFeatureExpr> getFeatures() { return features;}
 	public List<SingleFeatureExpr> getNoEffectlist() {	return this.noEffectlist;}
 	public void setNoEffectlist(List<SingleFeatureExpr> noEffectlist) { this.noEffectlist = noEffectlist;}
 

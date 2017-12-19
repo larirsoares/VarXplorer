@@ -1,11 +1,14 @@
 package interaction;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+
+import javax.swing.JFrame;
 
 import cmu.conditional.Conditional;
 import cmu.varviz.trace.Edge;
@@ -23,11 +26,10 @@ import interaction.dataflow.VarInteractionControl;
 import interaction.spec.SpecControl;
 import interaction.spec.Specification;
 import interaction.types.ControInteraction;
-import interaction.types.DataInteraction;
 import interaction.types.VarInteraction;
+import interaction.view.ClickHandler;
 import interaction.view.DotGraph;
 import interaction.view.InteractGraph;
-import scala.collection.immutable.Set;
 
 /**
  * has...
@@ -75,68 +77,17 @@ public class InteractionFinder {
 		
 		//control and data flow analysis
 		getImplications(workingDir,interactionsPerVarList,generalInteractionDataList);
+		
+		ArrayList<String> info = new ArrayList<>();
+		ClickHandler frame = new ClickHandler(info);
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.setSize(800, 600);
+		frame.setVisible(true);
 	}
 	
-//	public void getImplications(File workingDir, List<VarInteraction> interactionsPerVarList, List<VarInteraction> generalInteractionDataList) {
-//		
-//		List<String> featureVars = new ArrayList<>();
-//		List<DataInteraction> DataInteracList = new ArrayList<>();
-//		List<List> allVars = new ArrayList<>();
-//		Statement<?> END = VarvizView.TRACE.getEND();
-//		
-//		DataFlowControl dataControl = new DataFlowControl();
-//		
-//		List<FeatureExpr> expressions = new ArrayList<>();		
-//		for (Edge edge : this.edges) {
-//			FeatureExpr ctx = edge.getCtx();
-//			//System.out.println("edge: " + edge);
-//			
-//			if (!ctx.isTautology()) {				
-//					dataControl.getDataInteraction(edge, DataInteracList, END);
-//					DataInteracList = dataControl.getDataInteracList();
-//				
-//				//acho que talvez msm se já conter a expressao tem tb q testar se a variavel já existe
-//				//tenho que rever isso aqui
-//				if (!expressions.contains(ctx)) {
-//					expressions.add(ctx);
-//					System.out.println(ctx);			
-//					
-//					getFeatureVars(ctx, edge, featureVars, allVars, END);
-//				}else{
-//					System.out.println(ctx);			
-//					
-//					getFeatureVars(ctx, edge, featureVars, allVars, END);
-//				}
-//			}
-//		}
-//			
-//		//analyzing all interactions together: control + data exp
-//		GeneralDataInteraction generalDataI = new GeneralDataInteraction();
-//		List<VarInteraction> generalInteractionALLList = generalDataI.getALLInte(expressions, dataVarList);
-//		List<FeatureExpr> allAxpressions = new ArrayList<>();	
-//		allAxpressions = generalDataI.getExpressionALL();
-//		
-//		ControlflowControl finder = new ControlflowControl();
-//		//Map<PairExp, List<String>> hashMap = finder.getInteractionsTable(expressions);
-//		Map<PairExp, List<String>> hashMap = finder.getInteractionsTable(allAxpressions);//has everybody that interacts
-//		
-//		//relationships from presence conditions
-//		List<ControInteraction> controlFlowInteracList = finder.getInteractionList();
-//		
-//		//Examples of specifications	
-//		//setSpecification(finder, "sign", "addressbook");
-//		//setSpecification(finder, "decrypt", "addressbook");
-//		//setSpecification(finder, "decrypt", "encrypt");
-//	
-//		
-//		InteractGraph g = new InteractGraph(DataInteracList,interactionsPerVarList,controlFlowInteracList);		
-//		g.createGraphInter(hashMap, finder.getFeatures(), finder.getNoEffectlist(), expressions, workingDir, allVars, specList);	
-//	}
+
 
 	public void getImplications(File workingDir, List<VarInteraction> interactionsPerVarList, List<VarInteraction> generalInteractionDataList) {
-		//apagar depois
-		List<DataInteraction> DataInteracList = new ArrayList<>();
-		List<List> allVars = new ArrayList<>();
 		
 		List<FeatureExpr> expressions = new ArrayList<>();		
 		for (Edge edge : this.edges) {
@@ -157,23 +108,25 @@ public class InteractionFinder {
 		allAxpressions = generalDataI.getExpressionALL();
 		
 		ControlflowControl finder = new ControlflowControl();
-		//Map<PairExp, List<String>> hashMap = finder.getInteractionsTable(expressions);
+		
 		Map<PairExp, List<String>> hashMap = finder.getInteractionsTable(allAxpressions);//has everybody that interacts
 		
 		//relationships from presence conditions
 		List<ControInteraction> controlFlowInteracList = finder.getInteractionList();
 		
 		//Examples of specifications	
-		setAllow(finder, "F", "W");
+		//setAllow(finder, "F", "W");
 		//setReqAllow(finder, "F", "W", "String c");
 		//setReqAllow(finder, "F", "W", "String weather");
-		setSupAllow(finder, "S", "F", "String c");
+		//setSupAllow(finder, "S", "F", "String c");
 		//setSpecification(finder, "decrypt", "addressbook");
 		//setSpecification(finder, "decrypt", "encrypt");
 	
 		
 		InteractGraph g = new InteractGraph(interactionsPerVarList, specList, workingDir);		
-		g.createGraphInter(hashMap, finder.getFeatures(), finder.getNoEffectlist(), expressions);	
+		//g.createGraphInter(hashMap, finder.getFeatures(), finder.getNoEffectlist(), expressions);	
+		
+		System.out.println(workingDir.getAbsolutePath());
 		
 		InteractionCreator resultingGraph = new InteractionCreator(hashMap, finder.getFeatures(), finder.getNoEffectlist(), expressions,
 				interactionsPerVarList, specList);
@@ -182,6 +135,14 @@ public class InteractionFinder {
 		
 		DotGraph dot = new DotGraph();
 		dot.createGraph(finalList, resultingGraph, workingDir, expressions);
+		GraphFile file = new GraphFile();
+		file.createFile(finalList, resultingGraph, workingDir, expressions);
+		try {
+			file.write(finalList, resultingGraph, workingDir, expressions);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 
@@ -284,86 +245,6 @@ public class InteractionFinder {
 		}
 		return a;
 		
-	}
-	
-	//method to get the var of the control flow
-	private void getFeatureVars(FeatureExpr ctx, Edge edge, List<String> featureVars, List<List> allVars, Statement<?> eND) {
-
-		String ctxString = Conditional.getCTXString(ctx);
-		featureVars = new ArrayList<>();
-		Statement<?> s = edge.getTo();
-		
-		if(s.equals(eND)){
-			return;
-		}
-
-		if(ctx.size()>1 && checkExpression(edge)) {
-
-			System.out.println(s.toString());
-
-			if(!(s.toString().contains("if (")) && !(s.toString().contains("return ")) && (s.to.toList().get(1)!=null)){
-
-				if(s.to.size()>1 && !(s.to.toList().get(1).toString().contains("if ("))){
-					featureVars.add(ctxString);
-					System.out.println("Expr: " + ctxString);
-					featureVars.add(s.toString());
-					System.out.println("Overwritten Var: " + s.toString());
-
-					if (!s.to.toList().get(1).equals(eND)){
-						System.out.println(s.getTo() );
-						Statement<?> nextVar = s.getTo().toList().get(1);
-
-						if(nextVar.getCTX().equivalentTo(ctx)){//.equivalentTo(s.getCTX())){
-							if(!s.to.toList().get(1).toString().contains("return ")){													
-								featureVars.add( s.to.toList().get(1).toString());
-								System.out.println("Overwritten Var: " + s.to.toList().get(1).toString());
-							}
-						}
-					}
-					allVars.add(featureVars);
-				}
-				else if (s.to.size() == 1 && !s.equals(eND)){
-					featureVars.add(ctxString);
-					featureVars.add(s.toString());
-					System.out.println("Overwritten Var: " + s.toString());
-
-					if (!s.to.toList().get(0).equals(eND)){
-						System.out.println(s.getTo() );
-						Statement<?> nextVar = s.getTo().toList().get(0);
-
-						if(nextVar.getCTX().equivalentTo(s.getCTX())){
-							featureVars.add( s.to.toList().get(0).toString());
-							System.out.println("Overwritten Var: " + s.to.toList().get(0).toString());
-						}
-					}
-
-					allVars.add(featureVars);
-				}
-
-			}
-		}
-
-	}
-
-	//check if the expression is an AND between features to get the variables of control-flow
-	private Boolean checkExpression(Edge edge) {
-		FeatureExpr ctx = edge.getCtx();
-		Statement<?> s = edge.getTo();
-
-		Set<String> edgef = ctx.collectDistinctFeatures();
-		scala.collection.Iterator<String> fs = edgef.iterator();
-
-		List<FeatureExpr> listUniqueExp =  new ArrayList<>();
-
-		String uniqueExp = fs.next().substring(7);
-		FeatureExpr f  = Conditional.createFeature(uniqueExp);
-		System.out.println(edgef.size());
-		for(int i=1; i<edgef.size();i++){
-			f =  f.and( Conditional.createFeature(fs.next().substring(7)) ); 
-		}
-		listUniqueExp.add(f);//has the "and expressions"
-		return ctx.equivalentTo(f);
-
 	}
 
 	//getting all the variables of the trace

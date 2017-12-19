@@ -1,0 +1,26 @@
+noEffectF:
+L
+EffectF:
+T
+S
+F
+W
+EdgesF:
+3
+4
+requires
+2
+3
+suppresses
+2
+4
+suppresses
+VarF:
+3 4 require String c
+3 4 require String weather
+2 3 suppress String c
+2 4 suppress String c
+NumberVarPerEdge:
+3 4 2 require
+2 3 1 suppress
+2 4 1 suppress
