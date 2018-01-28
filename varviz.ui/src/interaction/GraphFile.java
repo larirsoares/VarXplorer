@@ -16,9 +16,20 @@ import de.fosd.typechef.featureexpr.SingleFeatureExpr;
 public class GraphFile {
 
 	private List<String> FileList = new ArrayList<>();
+	public List<String> getFileList() {
+		return FileList;
+	}
+
 	private String [] featuresList;
 	private List<String> varsToFileList = new ArrayList<>();
 	private List<String> numberVarsList = new ArrayList<>();
+	
+	private List<String> edgestoGraphx = new ArrayList<>();
+	public List<String> getEdgestoGraphx() {
+		return edgestoGraphx;
+	}
+
+	int cGraphX = 0;
 	
 	public void createFile(ArrayList<Interaction> finalList, InteractionCreator resultingGraph, File workingDir, List<FeatureExpr> expressions) {
 				
@@ -56,6 +67,7 @@ public class GraphFile {
 		
 		}	
 		
+		
 		FileList.add("EdgesF:");
 		for(Interaction inter: finalList){
 			String A = Conditional.getCTXString(inter.getPair().getA());
@@ -85,23 +97,44 @@ public class GraphFile {
 			}
 					
 			if(relation.equals("Require")){
-				//save the vars to the file
-				getVarsToFile(idA, idB, "require", shownVars);
 				
 				//Edge edge = new Edge(A,B);
 				FileList.add(Integer.toString(idA));
 				FileList.add(Integer.toString(idB));
 				FileList.add("requires");
+								
+				edgestoGraphx.add(A);
+				edgestoGraphx.add(B);
+				String name = "requires";
+				name += "\n";
+				edgestoGraphx.add(name);
+				edgestoGraphx.add(shownVars);
+				
+				//save the vars to the file
+				getVarsToFile(idA, idB, "require", shownVars);
 				
 			}else if(relation.equals("Suppress")){
-				getVarsToFile(idA, idB, "suppress", shownVars);			
+						
 				
 				//Edge edge = new Edge(A,B);
 				FileList.add(Integer.toString(idA));
 				FileList.add(Integer.toString(idB));
 				FileList.add("suppresses");
+				
+				getVarsToFile(idA, idB, "suppress", shownVars);	
+				edgestoGraphx.add(A);
+				edgestoGraphx.add(B);
+				String name = "suppresses";
+				name += "\n";
+				edgestoGraphx.add(name);
+				edgestoGraphx.add(shownVars);
 
 			}else{
+				edgestoGraphx.add(A);
+				edgestoGraphx.add(B);
+				edgestoGraphx.add("no relationship \n");
+				edgestoGraphx.add(shownVars);
+				
 				getVarsToFile(idA, idB, "no relationship", shownVars);
 					
 			}
@@ -130,6 +163,7 @@ public class GraphFile {
 			String s2 = Integer.toString(idA) + " " + Integer.toString(idB) + " " + eachvar.length + " " + type;
 			if(!varsToFileList.contains(s1)){
 				varsToFileList.add(s1);
+				//edgestoGraphx[cGraphX++] = "var: " + var;
 			}
 			if(!numberVarsList.contains(s2)){
 				numberVarsList.add(s2);
@@ -145,7 +179,7 @@ public class GraphFile {
 		BufferedWriter writer = null;
         try {
 
-            File logFile = new File("/Users/larissasoares/git/fork/varviz/varviz.ui/src/interaction/web/" + "VarXPlorerTest.txt");
+            File logFile = new File("/Users/larissasoares/git/fork/varviz/varviz.ui/src/interaction/view/" + "VarXPlorerData.txt");
 
             // This will output the full path where the file will be written to...
             System.out.println(logFile.getCanonicalPath());

@@ -30,6 +30,7 @@ import interaction.types.VarInteraction;
 import interaction.view.ClickHandler;
 import interaction.view.DotGraph;
 import interaction.view.InteractGraph;
+import interaction.view.SpecDialog;
 
 /**
  * has...
@@ -78,11 +79,6 @@ public class InteractionFinder {
 		//control and data flow analysis
 		getImplications(workingDir,interactionsPerVarList,generalInteractionDataList);
 		
-		ArrayList<String> info = new ArrayList<>();
-		ClickHandler frame = new ClickHandler(info);
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.setSize(800, 600);
-		frame.setVisible(true);
 	}
 	
 
@@ -113,14 +109,10 @@ public class InteractionFinder {
 		
 		//relationships from presence conditions
 		List<ControInteraction> controlFlowInteracList = finder.getInteractionList();
-		
-		//Examples of specifications	
-		//setAllow(finder, "F", "W");
-		//setReqAllow(finder, "F", "W", "String c");
-		//setReqAllow(finder, "F", "W", "String weather");
-		//setSupAllow(finder, "S", "F", "String c");
-		//setSpecification(finder, "decrypt", "addressbook");
-		//setSpecification(finder, "decrypt", "encrypt");
+				
+		if(isSpecificationOn()){
+			treatSpecification();
+		}
 	
 		
 		InteractGraph g = new InteractGraph(interactionsPerVarList, specList, workingDir);		
@@ -133,6 +125,7 @@ public class InteractionFinder {
 		ArrayList<Interaction> finalList = resultingGraph.getInteractionsToShow();
 		printFinalList(finalList, resultingGraph);
 		
+		//creating dot graph
 		DotGraph dot = new DotGraph();
 		dot.createGraph(finalList, resultingGraph, workingDir, expressions);
 		GraphFile file = new GraphFile();
@@ -143,9 +136,72 @@ public class InteractionFinder {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
+		//creating JgraphX
+		List<String> finalString = file.getFileList();
+		List<String> edgestoGraphx = file.getEdgestoGraphx();
+		createJGraphX(finalString, resultingGraph,edgestoGraphx);
 	}
 	
 
+
+	private void treatSpecification() {
+		//Examples of specifications	
+				//setAllow(finder, "F", "W");
+				//setReqAllow(finder, "F", "W", "String c");
+				//setReqAllow(finder, "F", "W", "String weather");
+				//setSupAllow(finder, "S", "F", "String c");
+				//setSpecification(finder, "decrypt", "addressbook");
+				//setSpecification(finder, "decrypt", "encrypt");
+		
+		//set allow require with var example:
+		/*setReqAllow(ControlflowControl finder, String s1, String s2, String var) {
+		SpecControl specControl = new SpecControl();
+		
+		SingleFeatureExpr[] a = getFeaturesSpec(finder, s1, s2);
+		Specification spec = specControl.createAllowReq(a[0], a[1], var);
+		specList.add(spec);*/
+		
+	}
+
+	private Boolean isSpecificationOn() {
+		
+		SpecDialog dialog = new SpecDialog();
+		return dialog.askSpec();
+	
+	}
+
+	private void createJGraphX(List<String> finalString, InteractionCreator resultingGraph, List<String> edgestoGraphx) {
+		
+		List<String> noeffectGraph =  new ArrayList<>();
+		for (SingleFeatureExpr feature1 : resultingGraph.getNoEffectlist()) {
+			 String f = Conditional.getCTXString(feature1);
+			noeffectGraph.add(f);		
+		}
+		
+		
+		//adding the other features
+		List<String> featuresGraph =  new ArrayList<>();
+		for (SingleFeatureExpr feature1 : resultingGraph.getFeatures()) {
+			String f = Conditional.getCTXString(feature1);
+			if(!noeffectGraph.contains(f)){
+				featuresGraph.add(f);
+				
+			}
+				
+		}					
+		
+		List<List> allListGraph = new ArrayList<>();
+		allListGraph.add(noeffectGraph);
+		allListGraph.add(featuresGraph);
+		allListGraph.add(edgestoGraphx);
+		
+		ClickHandler frame = new ClickHandler(allListGraph);
+		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		frame.setSize(800, 600);
+		frame.setVisible(true);	
+		
+	}
 
 	private void printFinalList(ArrayList<Interaction> finalList, InteractionCreator resultingGraph) {
 		System.out.println("");
