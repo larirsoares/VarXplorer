@@ -25,6 +25,7 @@ import interaction.dataflow.GeneralDataInteraction;
 import interaction.dataflow.VarInteractionControl;
 import interaction.spec.SpecControl;
 import interaction.spec.Specification;
+import interaction.spec.XMLReader;
 import interaction.types.ControInteraction;
 import interaction.types.VarInteraction;
 import interaction.view.ClickHandler;
@@ -45,6 +46,7 @@ public class InteractionFinder {
 	List<DataVar> dataVarList = new ArrayList<>();	//list with all the vars and their expressions
 	List<FeatureExpr> dataExpressions = new ArrayList<>();//list with all data expressions
 	private ArrayList<Specification> specList = new ArrayList<>();
+	private Boolean isSpecOn = false;
 	
 	private Method<?> mainMethod;
 	private List<Edge> edges;
@@ -111,7 +113,7 @@ public class InteractionFinder {
 		List<ControInteraction> controlFlowInteracList = finder.getInteractionList();
 				
 		if(isSpecificationOn()){
-			treatSpecification();
+			treatSpecification(finder);
 		}
 	
 		
@@ -140,33 +142,60 @@ public class InteractionFinder {
 		//creating JgraphX
 		List<String> finalString = file.getFileList();
 		List<String> edgestoGraphx = file.getEdgestoGraphx();
+		edgestoGraphx = preProcessingEdges(edgestoGraphx);
 		createJGraphX(finalString, resultingGraph,edgestoGraphx);
 	}
 	
 
 
-	private void treatSpecification() {
-		//Examples of specifications	
-				//setAllow(finder, "F", "W");
-				//setReqAllow(finder, "F", "W", "String c");
-				//setReqAllow(finder, "F", "W", "String weather");
-				//setSupAllow(finder, "S", "F", "String c");
-				//setSpecification(finder, "decrypt", "addressbook");
-				//setSpecification(finder, "decrypt", "encrypt");
+	private List<String> preProcessingEdges(List<String> edgestoGraphx) {
+		List<String> newList = new ArrayList<>(); //F1, F2, relation, variables
+		List<String> pairsList = new ArrayList<>();
+		for(int i=0; i<edgestoGraphx.size(); i++){
+			String toNotRepeatPair = edgestoGraphx.get(i)+ edgestoGraphx.get(i+1)+edgestoGraphx.get(i+2);
+			
+			if(newList.isEmpty()){
+				newList.add(edgestoGraphx.get(i));
+				newList.add(edgestoGraphx.get(i+1));
+				newList.add(edgestoGraphx.get(i+2));
+				newList.add(edgestoGraphx.get(i+3));				
+				pairsList.add(toNotRepeatPair);
+			}else{
+				if(!pairsList.contains(toNotRepeatPair)){
+					newList.add(edgestoGraphx.get(i));
+					newList.add(edgestoGraphx.get(i+1));
+					newList.add(edgestoGraphx.get(i+2));
+					newList.add(edgestoGraphx.get(i+3));				
+					pairsList.add(toNotRepeatPair);
+				}else{//the pars exists then update it
+					for(int j=0; j<newList.size(); j++){
+						if(toNotRepeatPair.equals(newList.get(j)+newList.get(j+1)+newList.get(j+2))){
+							newList.set(j+3, newList.get(j+3)+ "\n" + edgestoGraphx.get(i+3));//updating
+							break;
+						}
+						j = j + 3;
+					}
+				}
+			}
+			 i = i + 3;
+		}
+		return newList;
+	}
+
+	private void treatSpecification(ControlflowControl finder) {
 		
-		//set allow require with var example:
-		/*setReqAllow(ControlflowControl finder, String s1, String s2, String var) {
-		SpecControl specControl = new SpecControl();
+		List<DataVar> specFromXMLList = new ArrayList<>();	
+		XMLReader xmlread = new XMLReader();
+		xmlread.read(finder);
+		specList.addAll(xmlread.getSpec());
 		
-		SingleFeatureExpr[] a = getFeaturesSpec(finder, s1, s2);
-		Specification spec = specControl.createAllowReq(a[0], a[1], var);
-		specList.add(spec);*/
 		
 	}
 
 	private Boolean isSpecificationOn() {
 		
 		SpecDialog dialog = new SpecDialog();
+		isSpecOn = true;
 		return dialog.askSpec();
 	
 	}
@@ -185,7 +214,9 @@ public class InteractionFinder {
 		for (SingleFeatureExpr feature1 : resultingGraph.getFeatures()) {
 			String f = Conditional.getCTXString(feature1);
 			if(!noeffectGraph.contains(f)){
-				featuresGraph.add(f);
+				if(!f.equals("True")){
+					featuresGraph.add(f);
+				}
 				
 			}
 				
@@ -196,7 +227,11 @@ public class InteractionFinder {
 		allListGraph.add(featuresGraph);
 		allListGraph.add(edgestoGraphx);
 		
-		ClickHandler frame = new ClickHandler(allListGraph);
+		if(!isSpecOn){//in case of previous spec is not activated.
+			specList = null;
+		}
+		
+		ClickHandler frame = new ClickHandler(allListGraph, specList);
 		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		frame.setSize(800, 600);
 		frame.setVisible(true);	
@@ -326,8 +361,8 @@ public class InteractionFinder {
 					name = name.substring(0,name.length()-3);
 					Conditional<String> value = var.getValue();
 					for ( Entry<String, FeatureExpr> v: value.toMap().entrySet()){
-						DataVar data = new DataVar(name, v.getValue());
-						if(!containsData(data,v.getValue())){
+						DataVar data = new DataVar(name, Conditional.simplifyCondition(v.getValue()));
+						if(!containsData(data,Conditional.simplifyCondition(v.getValue()))){
 							dataVarList.add(data);
 							System.out.println("Var: " + data.getName() + " value: " + v.getValue());
 						}

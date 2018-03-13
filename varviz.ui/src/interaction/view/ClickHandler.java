@@ -8,6 +8,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -16,16 +17,22 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
+import com.mxgraph.layout.mxCircleLayout;
 import com.mxgraph.layout.mxFastOrganicLayout;
 import com.mxgraph.layout.mxIGraphLayout;
 import com.mxgraph.layout.mxParallelEdgeLayout;
 import com.mxgraph.model.mxCell;
 import com.mxgraph.swing.mxGraphComponent;
 import com.mxgraph.swing.util.mxMorphing;
+import com.mxgraph.util.mxConstants;
 import com.mxgraph.util.mxEvent;
 import com.mxgraph.util.mxEventObject;
 import com.mxgraph.util.mxEventSource.mxIEventListener;
 import com.mxgraph.view.mxGraph;
+import com.mxgraph.view.mxStylesheet;
+
+import interaction.spec.Specification;
+import interaction.spec.SpecificationXML;
 
 public class ClickHandler extends JFrame
 {
@@ -46,32 +53,51 @@ public class ClickHandler extends JFrame
 	List<String> noeffectList = new ArrayList<>();
 	List<String> featuresList = new ArrayList<>();
 	List<String> edgesList = new ArrayList<>(); //F1, F2, relation, variables
+	List<String> forbidEdgesList = new ArrayList<>(); //F1, F2, relation, variables
 	List<String> featuresNameList = new ArrayList<>();
 	List<Object> featuresObjectList = new ArrayList<>();
+	private ArrayList<Specification> specList;
+	List<String> notRepeatingEdgeList = new ArrayList<>();
 	
 	public PopMenu getPop() {	return pop;}
 	public List<PopOption> getAllOptionsSelected() {return allOptionsSelected;}
 
-	public ClickHandler(List<List> allListGraph)
+	public ClickHandler(List<List> allListGraph, ArrayList<Specification> specList)
 	{
 		super("VarXplorer: dynamic analysis of feature interactions");			
 		this.setSize(800, 600);
 		this.graphDataList = allListGraph;
-		
+		this.specList = specList;
 		graph.getModel().beginUpdate();
 		
+		
+		
+		applySpec(specList);
 		initializeGraph(allListGraph);
 		graphListener();
 		createButton();
 	
 	}
 
+	private void applySpec(ArrayList<Specification> specList) {
+		if(specList != null){
+			for(Specification spec: specList){
+				if(spec.getType().getName().equals("Forbid")){
+					forbidEdgesList.add(spec.getPair().toStringA());//F1, F2, relation, variables
+					forbidEdgesList.add(spec.getPair().toStringB());
+					forbidEdgesList.add(spec.getRelation().getName());
+					forbidEdgesList.add(spec.getVar());
+				}
+					
+			}
+		}
+		
+	}
 	private void createButton() {
 		JButton button = new JButton("Apply Spec & See New Graph");
-		//JButton button2 = new JButton("See new graph");
+		JButton buttonForb = new JButton("See Forbidden interactions");
 		JPanel jpanel = new JPanel();
-		jpanel.add(button);
-		//jpanel.add(button2);
+		jpanel.add(button);jpanel.add(buttonForb);
 		add(jpanel,  BorderLayout.SOUTH);
 		
 		button.addActionListener(new ActionListener()
@@ -95,12 +121,18 @@ public class ClickHandler extends JFrame
 				
 				//creating spec XML file
 				SpecificationXML xpec = new SpecificationXML();
-				xpec.create(allOptionsSelected);
+				
+				//test to know if the XML is empty or not. If not, we need to add the new info in the old one;
+				if(!specList.isEmpty()){
+					xpec.update(allOptionsSelected);
+				}else{
+					xpec.create(allOptionsSelected);
+				}
 				
 				//generating new graph
 				newGraphGeneration();
 				
-				JOptionPane.showMessageDialog(jpanel, "Specification XML file and Graph created successfully", "Specification", JOptionPane.INFORMATION_MESSAGE);
+				//JOptionPane.showMessageDialog(jpanel, "Specification XML file and Graph created successfully", "Specification", JOptionPane.INFORMATION_MESSAGE);
                 //dispose();
 			}
 
@@ -114,6 +146,7 @@ public class ClickHandler extends JFrame
 				framenew.setVisible(true);				
 			}
 			
+			//removing from the new graph, the interactions marked as allowed
 			private List<String> treatNewGraphInfo() {
 				
 				List<String> edgesListToRemove = new ArrayList<>(); //F1, F2, relation, variables
@@ -183,88 +216,23 @@ public class ClickHandler extends JFrame
 			}
 		});
 		
-		
-//		button2.addActionListener(new ActionListener()
-//		{
-//			@Override
-//			public void actionPerformed(ActionEvent e) {
-//				
-////				List<String> edgesListnew = treatNewGraphInfo();
-////				graphDataList.add(2, edgesListnew);
-////				ClickHandlerNewGraph framenew = new ClickHandlerNewGraph(graphDataList);
-////				framenew.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-////				framenew.setSize(800, 600);
-////				framenew.setVisible(true);
-//			}
-//
-////			private List<String> treatNewGraphInfo() {
-////				
-////				List<String> edgesListToRemove = new ArrayList<>(); //F1, F2, relation, variables
-////				List<String> edgesListNew = new ArrayList<>(); //F1, F2, relation, variables
-////				List<String> edgesListCopy = new ArrayList<>(); //F1, F2, relation, variables
-////				edgesListNew.addAll(edgesList);
-////				edgesListCopy.addAll(edgesList);
-////				for(PopOption p: allOptionsSelected){
-////					if(p.getState()){
-////						String[] info = p.getInfo().split(" ");
-////						if(info[0].contains("Allow")){//allow
-////							
-////							for(int i=0; i<edgesList.size();i++){
-////								String from = edgesList.get(i);
-////								String to = edgesList.get(i+1);
-////								
-////								if(from.equals(p.getFrom()) && to.equals(p.getTo())){
-////									String[] vars = edgesListNew.get(i+3).split(" |\n");
-////									if(vars.length == 2){
-//////										edgesListNew.remove(i);									
-//////										edgesListNew.remove(i);
-//////										edgesListNew.remove(i);
-//////										edgesListNew.remove(i);
-////										edgesListNew.set(i, null);									
-////										edgesListNew.set(i+1, null);	
-////										edgesListNew.set(i+2, null);	
-////										edgesListNew.set(i+3, null);	
-////									}else{
-////										String newVars = "";	
-////										int countpar = 0;
-////										for(int j=0; j<vars.length; j++){
-////
-////											if(vars[j]!= null){
-////												if(vars[j].equals(info[3]) && vars[j+1].equals(info[4])){
-////													vars[j] = null;
-////													vars[j+1] = null;
-////												}
-////											}
-////											if(vars[j]!= null && newVars!=""){
-////												 if((countpar  % 2) != 0) {//se é impar é msm var
-////													 newVars = newVars + " " + vars[j];
-////												 }else{//se é par, outra var
-////													 newVars = newVars + "\n" + vars[j];
-////												 }	
-////												 countpar++;
-////											}
-////											else if(vars[j]!= null && newVars==""){
-////												newVars = vars[j];
-////												countpar++;
-////											}
-////										}
-////										edgesListNew.set(i+3, newVars);					
-////									}
-////								}
-////								i = i+3;
-////							}
-////						}
-////					}
-////				}
-////				for(int k=0; k<edgesListNew.size(); k++){
-////					if(edgesListNew.get(k) == null){
-////						edgesListNew.remove(k);
-////						k = k-1;
-////					}
-////				}
-////				return edgesListNew;
-////			}
-//		});
+		buttonForb.addActionListener(new ActionListener()
+		{
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				String text = "";
+				for(int j=0; j<forbidEdgesList.size();j++){//F1, F2, relation, variables
+					text = text + "Forbidded " + forbidEdgesList.get(j+2) + " from " + forbidEdgesList.get(j) + " to " + forbidEdgesList.get(j+1) + " on " + forbidEdgesList.get(j+3) + "\n";
+					j = j +3;
+				}
+				if(text ==""){
+					text = "None.";
+					JOptionPane.showMessageDialog(jpanel, text, "Information", JOptionPane.ERROR_MESSAGE);
+				}else{
+					JOptionPane.showMessageDialog(jpanel, text);
+				}
+			}
+		});
 	}
 	
 	private void graphListener() {
@@ -294,7 +262,7 @@ public class ClickHandler extends JFrame
 							Object cellTname = ((mxCell)graph.getSelectionCell()).getTarget().getValue();
 							String popTitle = "Feature Interaction: " + cellSname + " - " + cellTname;
 							popStrings.add(popTitle);
-							createPopText((mxCell)graph.getSelectionCell(),popStrings);
+							createPopText((mxCell)graph.getSelectionCell(),popStrings, cellSname, cellTname);
 									
 							//replacing info from the same 'from' to 'to
 							List<PopOption> popsToRemoveList = new ArrayList<>();
@@ -322,21 +290,43 @@ public class ClickHandler extends JFrame
 				}
 			}
 
-			private void createPopText(mxCell selectionCell, ArrayList<String> popStrings) {
+			private void createPopText(mxCell selectionCell, ArrayList<String> popStrings, Object cellSname, Object cellTname) {
 				String vars = (String) selectionCell.getValue();
+				String source = (String) cellSname;
+				String target = (String) cellTname;
+				
+				//notRepeatingEdgeList.add(edgesList.get(i+2)+fromString+toString);
+				//notRepeatingEdgeList.add(edgesList.get(i+3));
 				String[] t = vars.split ("\n");
-				if(t.length>1){
-					for(int i=1; i<t.length;i++){
-						popStrings.add("Allow '" + t[0] + "' on " +  t[i]);
-						popStrings.add("Forbid '" + t[0] + "' on " +  t[i]);
+				String varsNotShowed = "";
+				String relation = t[0];
+				for(int i=0; i<notRepeatingEdgeList.size(); i++){
+					String compare = relation+"\n"+source+target;
+					if(notRepeatingEdgeList.get(i).equals(compare)){
+						varsNotShowed= notRepeatingEdgeList.get(i+1);
+					}
+					i = i+1;
+				}
+				
+				t = varsNotShowed.split ("\n");
+				if(t.length>0){
+					for(int i=0; i<t.length;i++){
+						popStrings.add((i+1) +". "+"Allow '" + relation + "' on " +  t[i]);
+						popStrings.add("Forbid '" + relation + "' on " +  t[i]);
 					}				
-				}			
+				}
+//				if(t.length>1){
+//					for(int i=1; i<t.length;i++){
+//						popStrings.add("Allow '" + t[0] + "' on " +  t[i]);
+//						popStrings.add("Forbid '" + t[0] + "' on " +  t[i]);
+//					}				
+//				}			
 			}
 
 			private void callwindow(MouseEvent e, PopMenu pop, ArrayList<String> popStrings, String from, String to) {
             	
             	ArrayList<String> featureVarsList = new ArrayList<>();    
-            	featureVarsList.add(popStrings.get(0));
+            	featureVarsList.add("-->" + popStrings.get(0));
             	featureVarsList.add("separator");
             	if(popStrings.size()>1){
 	            	for(int i=1; i<popStrings.size();i++){
@@ -370,12 +360,38 @@ public class ClickHandler extends JFrame
 	}
 	
 	private void initializeGraph(List<List> allListGraph){
+		
+		mxStylesheet stylesheet = graph.getStylesheet();
+//	    Hashtable<String, Object> style = new Hashtable<>();
+//	    stylesheet.putCellStyle("ROUNDED", style);
+
+	    Map<String, Object> vertexStyle = stylesheet.getDefaultVertexStyle();
+	    vertexStyle.put(mxConstants.STYLE_FILLCOLOR, "#FFFFFF");
+	    vertexStyle.put(mxConstants.STYLE_STROKECOLOR, "#000000");
+	    vertexStyle.put(mxConstants.STYLE_AUTOSIZE, 1);
+	    vertexStyle.put(mxConstants.STYLE_SPACING, "30");
+	    vertexStyle.put(mxConstants.STYLE_ORTHOGONAL, "true");
+	    vertexStyle.put(mxConstants.STYLE_SHAPE, mxConstants.SHAPE_ELLIPSE);
+
+	    Map<String, Object> edgeStyle = stylesheet.getDefaultEdgeStyle();
+	    edgeStyle.put(mxConstants.STYLE_EDGE, mxConstants.EDGESTYLE_ORTHOGONAL);
+	    edgeStyle.put(mxConstants.STYLE_SHAPE, mxConstants.SHAPE_CURVE);
+	    edgeStyle.put(mxConstants.STYLE_ENDARROW, mxConstants.ARROW_CLASSIC);
+		
+//	    mxStylesheet stylesheet = new mxStylesheet();
+	    stylesheet.setDefaultVertexStyle(vertexStyle);
+	    stylesheet.setDefaultEdgeStyle(edgeStyle);
+	    graph.setStylesheet(stylesheet);
+		
 		noeffectList = allListGraph.get(0);
 		featuresList = allListGraph.get(1);
 		edgesList = allListGraph.get(2); //F1, F2, relation, variables
 		featuresNameList = new ArrayList<>();
 		featuresObjectList = new ArrayList<>();
+		notRepeatingEdgeList = new ArrayList<>();
+		
 		int totalFeatures = 0;
+		
 		
 		try
 		{			
@@ -410,39 +426,73 @@ public class ClickHandler extends JFrame
 			for(int i=0; i<edgesList.size();i++){
 				Object from = null;
 				Object to = null;
+				String fromString = "";
+				String toString = "";
 				for(int j=0; j<featuresNameList.size(); j++){
 					if(featuresNameList.get(j).equals(edgesList.get(i))){
 						from = nodesvList.get(j);
+						fromString = edgesList.get(i);
 					}else if(featuresNameList.get(j).equals(edgesList.get(i+1))){
 						to  = nodesvList.get(j);
+						toString = edgesList.get(i+1);
 					}
 				}
 				Object v = null;
-				if(edgesList.get(i+2).equals("requires\n")){
-					v = graph.insertEdge(parent, null, edgesList.get(i+2) + edgesList.get(i+3), from, to, "strokeColor=green;dashed=true");
-					edgesvList.add(v);edgesvList.add(edgeID++);
-				}
-				else if(edgesList.get(i+2).equals("suppresses\n")){
-					v = graph.insertEdge(parent, null, edgesList.get(i+2) + edgesList.get(i+3), from, to, "strokeColor=red;dashed=true");
-					edgesvList.add(v);edgesvList.add(edgeID++);
-				}
-				else{
-					v= graph.insertEdge(parent, null, edgesList.get(i+3), from, to);
-					edgesvList.add(v);edgesvList.add(edgeID++);
-				}			 
+				
+				
+				//number of vars:
+				String[] t = edgesList.get(i+3).split ("\n");
+				int numberVars = t.length;
+				
+				// checking if there are 2 or more edges  that are equal
+				String doubleEdge = edgesList.get(i+2)+fromString+toString;//ex.: "requires\n45"
+				if(checkDoubleEdge(doubleEdge, notRepeatingEdgeList)){
+					//updateLabel(edgesvList, edgesList.get(i+2), edgesList.get(i+3), fromString, toString);
+				
+				}else{
+					if(edgesList.get(i+2).equals("requires\n")){
+						if(isforbidden(fromString, toString, "Require")){
+							//v = graph.insertEdge(parent, null, edgesList.get(i+2) + edgesList.get(i+3), from, to, "strokeColor=purple;strokeWidth=10");						
+							v = graph.insertEdge(parent, null, edgesList.get(i+2) + " ("+numberVars+")", from, to, "strokeColor=purple;strokeWidth=10");													
+						}else{
+							v = graph.insertEdge(parent, null, edgesList.get(i+2)+ " ("+numberVars+")", from, to, "strokeColor=green;dashed=true;verticalLabelPosition=middle");				
+						}
+						notRepeatingEdgeList.add(edgesList.get(i+2)+fromString+toString);
+						notRepeatingEdgeList.add(edgesList.get(i+3));
+						edgesvList.add(v);//edgesvList.add(edgeID++);
+					}
+					else if(edgesList.get(i+2).equals("suppresses\n")){
+						if(isforbidden(fromString, toString, "Suppress")){
+							v = graph.insertEdge(parent, null, edgesList.get(i+2)+ " ("+numberVars+")", from, to, "strokeColor=purple;strokeWidth=10;verticalAlign=top;verticalLabelPosition=bottom");
+						}else{
+							v = graph.insertEdge(parent, null, edgesList.get(i+2)+ " ("+numberVars+")", from, to, "strokeColor=red;dashed=true;verticalAlign=top;verticalLabelPosition=bottom;labelPosition=left");//"strokeColor=red;dashed=true;ROUNDED"
+						}
+						notRepeatingEdgeList.add(edgesList.get(i+2)+fromString+toString);
+						notRepeatingEdgeList.add(edgesList.get(i+3));
+						edgesvList.add(v);//edgesvList.add(edgeID++);
+					}
+					else{
+						v= graph.insertEdge(parent, null, edgesList.get(i+3), from, to);
+						notRepeatingEdgeList.add(fromString+toString);
+						notRepeatingEdgeList.add(edgesList.get(i+3));
+						edgesvList.add(v);//edgesvList.add(edgeID++);
+					}
+					
+				}	
+					
+					
 				 i = i + 3;
 			}
 
 		   
-		   graph.setCellsEditable(false);
+		   graph.setCellsEditable(true);//aqui
 		   //edge cannot be moved without connecting to a node
-		   graph.setAllowDanglingEdges(false);
-		   graph.setAllowLoops(false);
+		   graph.setAllowDanglingEdges(false);//aqui
+		   graph.setAllowLoops(true);
 		   graph.setAutoSizeCells(true);
-		  // graph.setConnectableEdges(false);
-		   graph.setPortsEnabled(false);
+		   graph.setPortsEnabled(true);
 		   //nao mudou nada =/
-		   graph.setEnabled(false);
+		   graph.setEnabled(true);//aqui
 		   	   
 		}
 		finally
@@ -458,9 +508,15 @@ public class ClickHandler extends JFrame
 		//to not create new edges
 		graphComponent.setConnectable(false);
 		
+	
+		new mxCircleLayout(graph).execute(graph.getDefaultParent());				
+		
 		new mxParallelEdgeLayout(graph).execute(graph.getDefaultParent());
+		graph.getModel().endUpdate();
 
 		mxIGraphLayout layout = new mxFastOrganicLayout(graph);
+		//mxHierarchicalLayout layout2 = new mxHierarchicalLayout(graph);
+		
 		// layout graph
 	    layout.execute(graph.getDefaultParent());
 	    // set some properties
@@ -483,6 +539,48 @@ public class ClickHandler extends JFrame
 	        });
 	        morph.startAnimation();
 	    }
+	}
+	
+	private void updateLabel(ArrayList<Object> edgesvList, String relation, String var, String fromString, String toString) {
+		
+		//v = graph.insertEdge(parent, null, edgesList.get(i+2) + edgesList.get(i+3), from, to, "strokeColor=red;dashed=true;ROUNDED");
+		for(int i=0; i<edgesvList.size(); i++){
+			Object cell = edgesvList.get(i);
+			System.out.println(cell);
+			String value = (String) ((mxCell) cell).getValue();					
+			
+			if(((mxCell) cell).getSource().getValue().equals(fromString) && 
+					((mxCell) cell).getTarget().getValue().equals(toString) &&
+					((mxCell) cell).getValue().toString().contains(relation)){
+				
+				((mxCell) cell).setValue(value + ", " +var);
+				edgesvList.set(i, cell);	
+			}
+		
+		}
+		
+	}
+	private boolean checkDoubleEdge(String NewEdge, List<String> notRepeatingEdgeList) {
+		
+		for(String oldEdge: notRepeatingEdgeList){
+			if(NewEdge.equals(oldEdge)){
+				return true;
+			}
+		}
+		return false;
+	}
+	private boolean isforbidden(String from, String to, String relation) {
+		
+		for(int j=0; j<forbidEdgesList.size();j++){//F1, F2, relation, variables
+			if(forbidEdgesList.get(j).equals(from) && forbidEdgesList.get(j+1).equals(to)
+					&& forbidEdgesList.get(j+2).equals(relation)){
+				
+				return true;
+			}
+			j = j +3;
+		}
+		
+		return false;
 	}
 	
 	public static void main(String[] args)
