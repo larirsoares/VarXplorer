@@ -1,27 +1,21 @@
 noEffectF:
-teste
-L
+executivefloor
+empty
 EffectF:
-T
-S
-F
-W
+True
+twothirdsfull
+overloaded
+weight
 EdgesF:
+4
+3
+suppresses
 4
 5
 requires
-3
-5
-suppresses
-3
-4
-suppresses
 VarF:
-4 5 require String c
-4 5 require String weather
-3 5 suppress String c
-3 4 suppress String c
+4 3 suppress boolean respectFloorCalls
+4 5 require int Elevator.weight
 NumberVarPerEdge:
-4 5 2 require
-3 5 1 suppress
-3 4 1 suppress
+4 3 1 suppress
+4 5 1 require
