@@ -39,18 +39,24 @@ public class DotGraph {
 			String A = Conditional.getCTXString(inter.getPair().getA());
 			String B = Conditional.getCTXString(inter.getPair().getB());
 			
-			String relation = inter.getRelations().get(0).getRelation();
+			String relation = "";
 			String shownVars = "";
-			
-			for(String var: inter.getRelations().get(0).getVars()){
-				if(shownVars!=""){
-					shownVars += "\n";
-				}
+			if(!inter.getRelations().isEmpty()){
+				relation = inter.getRelations().get(0).getRelation();							
 				
-				if(!shownVars.contains(var)){
-					shownVars += var;
+				for(String var: inter.getRelations().get(0).getVars()){
+					if(shownVars!=""){
+						shownVars += "\n";
+					}
+					
+					if(!shownVars.contains(var)){
+						shownVars += var;
+					}
 				}
 			}
+		
+			
+			
 					
 			if(relation.equals("Require")){
 				if(shownVars!=""){

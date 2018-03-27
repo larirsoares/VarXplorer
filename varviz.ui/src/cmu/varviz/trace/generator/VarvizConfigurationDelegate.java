@@ -200,6 +200,7 @@ public class VarvizConfigurationDelegate extends AbstractJavaLaunchConfiguration
 //			} catch (Exception e) {
 //				e.printStackTrace();
 //			}
+			VarvizView.refreshVisuals();
 
 			// check for cancellation
 			if (monitor.isCanceled()) {

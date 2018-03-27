@@ -472,7 +472,7 @@ public class ClickHandler extends JFrame
 						edgesvList.add(v);//edgesvList.add(edgeID++);
 					}
 					else{
-						v= graph.insertEdge(parent, null, edgesList.get(i+3), from, to);
+						v= graph.insertEdge(parent, null, edgesList.get(i+3), from, to, "strokeColor=black");
 						notRepeatingEdgeList.add(fromString+toString);
 						notRepeatingEdgeList.add(edgesList.get(i+3));
 						edgesvList.add(v);//edgesvList.add(edgeID++);

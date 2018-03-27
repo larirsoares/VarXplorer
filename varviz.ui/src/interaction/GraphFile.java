@@ -83,18 +83,23 @@ public class GraphFile {
 				}
 			}
 			
-			String relation = inter.getRelations().get(0).getRelation();
+			String relation = "";
 			String shownVars = "";
-			
-			for(String var: inter.getRelations().get(0).getVars()){
-				if(shownVars!=""){
-					shownVars += "\n";
-				}
+			if(!inter.getRelations().isEmpty()){
+				relation = inter.getRelations().get(0).getRelation();
 				
-				if(!shownVars.contains(var)){
-					shownVars += var;
+				for(String var: inter.getRelations().get(0).getVars()){
+					if(shownVars!=""){
+						shownVars += "\n";
+					}
+					
+					if(!shownVars.contains(var)){
+						shownVars += var;
+					}
 				}
 			}
+			
+			
 					
 			if(relation.equals("Require")){
 				

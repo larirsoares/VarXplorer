@@ -112,9 +112,9 @@ public class InteractionFinder {
 		//relationships from presence conditions
 		List<ControInteraction> controlFlowInteracList = finder.getInteractionList();
 				
-		if(isSpecificationOn()){
-			treatSpecification(finder);
-		}
+//		if(isSpecificationOn()){
+//			treatSpecification(finder);
+//		}
 	
 		
 		InteractGraph g = new InteractGraph(interactionsPerVarList, specList, workingDir);		
