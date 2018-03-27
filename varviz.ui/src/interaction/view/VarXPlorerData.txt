@@ -1,21 +1,21 @@
 noEffectF:
-executivefloor
 empty
+overloaded
 EffectF:
+executivefloor
 True
 twothirdsfull
-overloaded
 weight
 EdgesF:
-4
-3
-suppresses
-4
+2
 5
 requires
+2
+4
+suppresses
 VarF:
-4 3 suppress boolean respectFloorCalls
-4 5 require int Elevator.weight
+2 5 require int Elevator.weight
+2 4 suppress boolean respectFloorCalls
 NumberVarPerEdge:
-4 3 1 suppress
-4 5 1 require
+2 5 1 require
+2 4 1 suppress
