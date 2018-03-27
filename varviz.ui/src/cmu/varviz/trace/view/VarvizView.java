@@ -1,5 +1,8 @@
 package cmu.varviz.trace.view;
 
+import java.util.IdentityHashMap;
+import java.util.Map;
+
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
@@ -34,12 +37,15 @@ import cmu.varviz.VarvizActivator;
 import cmu.varviz.io.graphviz.Format;
 import cmu.varviz.io.graphviz.GrapVizExport;
 import cmu.varviz.trace.Method;
+import cmu.varviz.trace.MethodElement;
 import cmu.varviz.trace.Statement;
 import cmu.varviz.trace.Trace;
 import cmu.varviz.trace.filters.Or;
 import cmu.varviz.trace.filters.StatementFilter;
 import cmu.varviz.trace.generator.TraceGenerator;
 import cmu.varviz.trace.generator.varexj.VarexJGenerator;
+import cmu.varviz.trace.uitrace.GraphicalStatement;
+import cmu.varviz.trace.uitrace.GraphicalTrace;
 import cmu.varviz.trace.view.actions.HideAction;
 import cmu.varviz.trace.view.actions.RemovePathAction;
 import cmu.varviz.trace.view.editparts.TraceEditPartFactory;
@@ -51,15 +57,16 @@ import cmu.varviz.trace.view.editparts.TraceEditPartFactory;
  *
  */
 public class VarvizView extends ViewPart {
-	
+
 	public static final IWorkspaceRoot workspaceRoot = ResourcesPlugin.getWorkspace().getRoot();
-	public static final QualifiedName SHOW_LABELS_QN = new QualifiedName(VarvizView.class.getName() + "#showLables", "showLables");
+	public static final QualifiedName SHOW_LABELS_QN = new QualifiedName(VarvizView.class.getName() + "#showLables",
+			"showLables");
 	public static final QualifiedName USE_VAREXJ_QN = new QualifiedName(VarvizView.class.getName() + "#useVarexJ", "useVarexJ");
 	public static final QualifiedName REEXECUTE_QN = new QualifiedName(VarvizView.class.getName() + "#REEXECUTE", "REEXECUTE");
 
 	public static TraceGenerator generator = new VarexJGenerator();
 
-	private static ScrollingGraphicalViewer viewer;
+	public static ScrollingGraphicalViewer viewer;
 	private ScalableFreeformRootEditPart rootEditPart;
 
 	private PrintAction printAction;
@@ -70,24 +77,40 @@ public class VarvizView extends ViewPart {
 
 	public static boolean reExecuteForExceptionFeatures = Boolean.parseBoolean(getProperty(REEXECUTE_QN));
 	public static boolean showLables = Boolean.parseBoolean(getProperty(SHOW_LABELS_QN));
-	public static boolean useVarexJ = Boolean.parseBoolean(getProperty(USE_VAREXJ_QN));;
-	
+	public static boolean useVarexJ = Boolean.parseBoolean(getProperty(USE_VAREXJ_QN));
+
 	public static int projectID = 0;
 	public static int minDegree = 2;
-	
+
 	private static LayoutManager lm = new LayoutManager();
 
-	public static Trace TRACE = new Trace();
-	public static String PROJECT_NAME = "";
+	private static Trace TRACE = new Trace();
+	public static GraphicalTrace GRAPHICAL_TRACE = null;
 	
+	public static GraphicalStatement getGraphicalStatement(MethodElement<?> element) {
+		return VarvizView.GRAPHICAL_TRACE.getGraphicalStatement((Statement<?>) element);
+	}
+	
+	public static Trace getTRACE() {
+		return TRACE;
+	}
+	
+	public static void setTRACE(Trace trace) {
+		TRACE = trace;
+		GRAPHICAL_TRACE = new GraphicalTrace(TRACE);
+	}
+	
+	public static String PROJECT_NAME = "";
+
 	// TODO remove
 	public static final String PROJECT_Sources = "NanoXML";
 	public static final String PROJECT_Sources_Folder = "Sources/Java";
 	public static final String PROJECT_Sources_Test_Folder = "Test/Java";
-	
+
 	private static final double[] ZOOM_LEVELS;
 	static {
-		ZOOM_LEVELS = new double[] { .1, .15, .2, .3, .4, .5, .6, .7, .8, .9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2};
+		ZOOM_LEVELS = new double[] { .1, .15, .2, .3, .4, .5, .6, .7, .8, .9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9,
+				2 };
 	}
 
 	@Override
@@ -100,7 +123,7 @@ public class VarvizView extends ViewPart {
 		rootEditPart = new ScalableFreeformRootEditPart();
 		((ConnectionLayer) rootEditPart.getLayer(LayerConstants.CONNECTION_LAYER)).setAntialias(SWT.ON);
 		viewer.setRootEditPart(rootEditPart);
-		refresh();
+		refreshVisuals();
 
 		printAction = new PrintAction(this);
 
@@ -108,21 +131,21 @@ public class VarvizView extends ViewPart {
 		bars.setGlobalActionHandler(ActionFactory.PRINT.getId(), printAction);
 
 		IToolBarManager toolbarManager = bars.getToolBarManager();
-		
+
+		toolbarManager.add(new SearchBar());
+
 		showLablesButton = new Action() {
 			public void run() {
 				showLables = !showLables;
 				setProperty(SHOW_LABELS_QN, Boolean.toString(showLables));
-				TRACE.createEdges();
-				TRACE.highlightException();
-				refreshVisuals();
+				GRAPHICAL_TRACE.refreshGraphicalEdges();
 			}
 		};
 		showLablesButton.setChecked(showLables);
 		showLablesButton.setToolTipText("Show edge context");
 		toolbarManager.add(showLablesButton);
 		showLablesButton.setImageDescriptor(VarvizActivator.LABEL_IMAGE_DESCRIPTOR);
-		
+
 		exceptionButton = new Action() {
 			public void run() {
 				reExecuteForExceptionFeatures = !reExecuteForExceptionFeatures;
@@ -138,11 +161,11 @@ public class VarvizView extends ViewPart {
 			public void run() {
 				FileDialog fileDialog = new FileDialog(parent.getShell(), SWT.SAVE);
 				fileDialog.setFileName(PROJECT_NAME);
-				final String[] extensions = new String[Format.values().length] ;
+				final String[] extensions = new String[Format.values().length];
 				for (int i = 0; i < extensions.length; i++) {
 					extensions[i] = "*." + Format.values()[i];
 				}
-				
+
 				fileDialog.setFilterExtensions(extensions);
 				String location = fileDialog.open();
 				if (location != null) {
@@ -153,7 +176,8 @@ public class VarvizView extends ViewPart {
 		};
 		exportGraphVizButton.setToolTipText("Export with GraphViz");
 		toolbarManager.add(exportGraphVizButton);
-		exportGraphVizButton.setImageDescriptor(AbstractUIPlugin.imageDescriptorFromPlugin(PlatformUI.PLUGIN_ID, "icons/full/etool16/export_wiz.png"));
+		exportGraphVizButton.setImageDescriptor(AbstractUIPlugin.imageDescriptorFromPlugin(PlatformUI.PLUGIN_ID,
+				"icons/full/etool16/export_wiz.png"));
 
 		exportAsToolbarIcon = new Action(useVarexJ ? "VarexJ" : "SampleJ", Action.AS_DROP_DOWN_MENU) {
 			@Override
@@ -194,14 +218,14 @@ public class VarvizView extends ViewPart {
 				exportXMLContributionItem.fill(fMenu, -1);
 				return fMenu;
 			}
-			
+
 			@Override
-			public void dispose() {}
+			public void dispose() {
+			}
 
 		});
 		toolbarManager.add(exportAsToolbarIcon);
-		
-		
+
 		((ScalableFreeformRootEditPart) viewer.getRootEditPart()).getZoomManager().setZoomLevels(ZOOM_LEVELS);
 		viewer.getControl().addMouseWheelListener(ev -> {
 			if ((ev.stateMask & SWT.CTRL) == 0) {
@@ -216,7 +240,7 @@ public class VarvizView extends ViewPart {
 
 		createContextMenu();
 	}
-	
+
 	private static String getProperty(QualifiedName qn) {
 		try {
 			return workspaceRoot.getPersistentProperty(qn);
@@ -225,8 +249,8 @@ public class VarvizView extends ViewPart {
 		}
 		return "";
 	}
-	
-	private static  void setProperty(QualifiedName qn, String value) {
+
+	private static void setProperty(QualifiedName qn, String value) {
 		try {
 			workspaceRoot.setPersistentProperty(qn, value);
 		} catch (CoreException e) {
@@ -250,17 +274,13 @@ public class VarvizView extends ViewPart {
 	}
 
 	private void fillContextMenu(IMenuManager menuMgr) {
-		menuMgr.add(new HideAction("Hide Element", viewer, this));
-		menuMgr.add(new RemovePathAction("Remove Path", viewer, this));
+		menuMgr.add(new HideAction("Hide Element", viewer));
+		menuMgr.add(new RemovePathAction("Remove Path", viewer));
 	}
 
 	@Override
 	public void setFocus() {
 
-	}
-
-	public void refresh() {
-		refreshVisuals();
 	}
 
 	public static void refreshVisuals() {
@@ -269,25 +289,35 @@ public class VarvizView extends ViewPart {
 				viewer.setContents(TRACE);
 				viewer.getContents().refresh();
 				lm.layout(viewer.getContents());
+
+				VarvizViewerUtils.refocusView(viewer);
 			}
 		});
 	}
 
+	public static Map<Method<?>, Boolean> checked = new IdentityHashMap<>();
 	public static StatementFilter basefilter = new Or(new StatementFilter() {
 
 		@Override
 		public boolean filter(Statement<?> s) {
-			return !(hasParent(s.getParent(), "java.", "<init>") || hasParent(s.getParent(), "java.", "<clinit>"));
+			return !(hasParent(s.getParent(), "java."));
 		}
 
-		private boolean hasParent(Method<?> parent, String filter, String filter2) {
+		private boolean hasParent(Method<?> parent, String filter) {
+			if (checked.containsKey(parent)) {
+				return checked.get(parent);
+			}
 			if (parent.toString().contains(filter)) {
+				checked.put(parent, true);
 				return true;
 			}
 			parent = parent.getParent();
 			if (parent != null) {
-				return hasParent(parent, filter, filter2);
+				boolean result = hasParent(parent, filter);
+				checked.put(parent, result);
+				return result;
 			}
+			checked.put(parent, false);
 			return false;
 		}
 	});

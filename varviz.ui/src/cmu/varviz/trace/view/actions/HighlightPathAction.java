@@ -19,14 +19,12 @@ import de.fosd.typechef.featureexpr.FeatureExpr;
 public class HighlightPathAction extends Action {
 
 	private GraphicalViewerImpl viewer;
-	private VarvizView varvizViewView;
 
 	public HighlightPathAction(String text, GraphicalViewerImpl viewer, VarvizView varvizViewView) {
 		super(text);
 		this.viewer = viewer;
-		this.varvizViewView = varvizViewView;
 	}
-	
+
 	@Override
 	public void run() {
 		IStructuredSelection selection = (IStructuredSelection) viewer.getSelection();
@@ -37,18 +35,18 @@ public class HighlightPathAction extends Action {
 				ctx = ((MethodEditPart) selectedItem).getMethodModel().getCTX();
 			} else if (selectedItem instanceof StatementEditPart) {
 				ctx = ((StatementEditPart) selectedItem).getStatementModel().getCTX();
-			} else if (selectedItem instanceof EdgeEditPart){
+			} else if (selectedItem instanceof EdgeEditPart) {
 				ctx = ((EdgeEditPart) selectedItem).getEdgeModel().getCtx();
 			} else {
 				return;
 			}
 
 			// TODO revise update
-			VarvizView.TRACE.createEdges();
+			VarvizView.getTRACE().createEdges();
 //			varvizViewView.trace.highlightNotTautology();
-			VarvizView.TRACE.highlightException(ctx);
+			VarvizView.getTRACE().highlightException(ctx);
 //			varvizViewView.trace.highlightContext(ctx, NodeColor.limegreen, 2);
-			varvizViewView.refreshVisuals();
+			VarvizView.refreshVisuals();
 		}
 	}
 }
