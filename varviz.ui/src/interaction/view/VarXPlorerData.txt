@@ -1,21 +1,17 @@
 noEffectF:
-empty
-overloaded
+TeenLine
+Base
+IN_Call_Forwarding
+Call_Waiting
 EffectF:
-executivefloor
-True
-twothirdsfull
-weight
+Calling_Number_Blocking
+Terminating_Call_Screening
+Call_Forwarding_Busy
 EdgesF:
-2
 5
-requires
-2
-4
+6
 suppresses
 VarF:
-2 5 require int Elevator.weight
-2 4 suppress boolean respectFloorCalls
+5 6 suppress boolean Person.offHook
 NumberVarPerEdge:
-2 5 1 require
-2 4 1 suppress
+5 6 1 suppress

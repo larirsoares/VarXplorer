@@ -67,9 +67,9 @@ public class DotGraph {
 				
 				Edge edge = new Edge(A,B);
 				if(inter.getRelations().get(0).isDataRelation()){					
-					edge.setColor(Color.X11.green).setStyle(Style.Edge.dashed).setArrowHead(ArrowType.empty);					
+					edge.setColor(Color.X11.darkgreen).setStyle(Style.Edge.dashed).setArrowHead(ArrowType.empty);					
 				}else{
-					edge.setColor(Color.X11.green).setArrowHead(ArrowType.empty);
+					edge.setColor(Color.X11.darkgreen).setArrowHead(ArrowType.empty);
 				}
 				edge.setLabel(shownVars).setFontSize(14);
 				g.addEdge(edge);

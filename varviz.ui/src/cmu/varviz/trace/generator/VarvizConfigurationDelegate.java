@@ -104,8 +104,10 @@ public class VarvizConfigurationDelegate extends AbstractJavaLaunchConfiguration
 			monitor.subTask("Run application with VarexJ");
 			StringBuilder cp = new StringBuilder();
 			for (String c : classpath) {
-				cp.append(c);
-				cp.append(',');
+				if (!c.contains("JavaVirtualMachines")) {// TODO quick fix ignores JVM classes on Mac, mYBE DUE TO N
+					cp.append(c);
+					cp.append(',');
+				}
 			}
 			cp.append("${jpf-core}");
 
@@ -190,16 +192,16 @@ public class VarvizConfigurationDelegate extends AbstractJavaLaunchConfiguration
 			}
 			
 			//XXX Lari: interaction finder
-//			try {			
+			try {			
 			Method<?> mainMethod = VarvizView.getTRACE().getMain();	
 			List<Edge> ed = VarvizView.getTRACE().getEdges();
 			
 			InteractionFinder finder = new InteractionFinder(mainMethod, ed);
 			finder.findInteractions(workingDir);			
 
-//			} catch (Exception e) {
-//				e.printStackTrace();
-//			}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 			VarvizView.refreshVisuals();
 
 			// check for cancellation

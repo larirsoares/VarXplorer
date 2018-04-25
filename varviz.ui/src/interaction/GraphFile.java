@@ -184,7 +184,7 @@ public class GraphFile {
 		BufferedWriter writer = null;
         try {
 
-            File logFile = new File("/Users/larissasoares/git/fork/varviz/varviz.ui/src/interaction/view/" + "VarXPlorerData.txt");
+            File logFile = new File("/Users/larirocha/git/VarXplorer/varviz.ui/src/interaction/view/" + "VarXPlorerData.txt");
 
             // This will output the full path where the file will be written to...
             System.out.println(logFile.getCanonicalPath());
