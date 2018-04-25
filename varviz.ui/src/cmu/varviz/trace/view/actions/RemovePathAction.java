@@ -3,7 +3,6 @@ package cmu.varviz.trace.view.actions;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
-import org.eclipse.gef.ui.parts.GraphicalViewerImpl;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.viewers.IStructuredSelection;
 
@@ -22,22 +21,22 @@ import de.fosd.typechef.featureexpr.FeatureExpr;
  */
 public class RemovePathAction extends Action {
 
-	private GraphicalViewerImpl viewer;
+	private VarvizView view;
 
-	public RemovePathAction(String text, GraphicalViewerImpl viewer) {
+	public RemovePathAction(String text, VarvizView varvizView) {
 		super(text);
-		this.viewer = viewer;
+		this.view = varvizView;
 	}
 
 	@Override
 	public void run() {
-		IStructuredSelection selection = (IStructuredSelection) viewer.getSelection();
+		IStructuredSelection selection = (IStructuredSelection) view.getViewer().getSelection();
 		Object selectedItem = selection.getFirstElement();
 		if (selectedItem != null) {
-			final Deque<MethodElement<?>> stack;
+			final Deque<MethodElement> stack;
 			final FeatureExpr ctx;
 			{
-				final MethodElement<?> s;
+				final MethodElement s;
 				if (selectedItem instanceof EdgeEditPart) {
 					s = ((EdgeEditPart) selectedItem).getEdgeModel().getTo();
 				} else if (selectedItem instanceof StatementEditPart) {
@@ -50,16 +49,16 @@ public class RemovePathAction extends Action {
 				ctx = s.getCTX();
 			}
 			while (!stack.isEmpty()) {
-				final MethodElement<?> currentStatement = stack.pop();
+				final MethodElement currentStatement = stack.pop();
 				if (currentStatement.getCTX().equals(currentStatement.getCTX().and(ctx))) {
-					final Method<?> parent = currentStatement.getParent();
+					final Method parent = currentStatement.getParent();
 					if (parent != null) {
 						parent.filterExecution(e -> e != currentStatement);
 					}
 					if (currentStatement.to == null) {
 						continue;
 					}
-					for (MethodElement<?> next : currentStatement.to.toList()) {
+					for (MethodElement next : currentStatement.to.toList()) {
 						if (next != null) {
 							stack.push(next);
 						}
@@ -67,8 +66,8 @@ public class RemovePathAction extends Action {
 				}
 			}
 
-			VarvizView.getTRACE().finalizeGraph();
-			VarvizView.refreshVisuals();
+			view.getTRACE().finalizeGraph();
+			view.refreshVisuals();
 		}
 	}
 }

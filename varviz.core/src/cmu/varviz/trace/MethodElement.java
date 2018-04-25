@@ -7,28 +7,29 @@ import cmu.conditional.One;
 import cmu.varviz.trace.filters.StatementFilter;
 import de.fosd.typechef.featureexpr.FeatureExpr;
 
-public abstract class MethodElement<T> {
+@SuppressWarnings("unchecked")
+public abstract class MethodElement {
 
 	private static int ID = 0;
-	protected final int id = ID++;
+	protected final int elementID = ID++;
 	protected boolean filtered = false;
 	
-	public Conditional<MethodElement<T>> from = (Conditional<MethodElement<T>>) One.NULL;
-	public Conditional<MethodElement<T>> to = (Conditional<MethodElement<T>>) One.NULL;
+	public Conditional<MethodElement> from = (Conditional<MethodElement>) One.NULL;
+	public Conditional<MethodElement> to = (Conditional<MethodElement>) One.NULL;
 
-	public Conditional<MethodElement<T>> getFrom() {
+	public Conditional<MethodElement> getFrom() {
 		return from;
 	}
 
-	public Conditional<MethodElement<T>> getTo() {
+	public Conditional<MethodElement> getTo() {
 		return to;
 	}
 
 	protected FeatureExpr ctx;
 
-	protected final T content;
+	protected final Object content;
 	
-	public final T getContent() {
+	public final Object getContent() {
 		return content;
 	}
 
@@ -42,21 +43,21 @@ public abstract class MethodElement<T> {
 		this.lineNumber = lineNumber;
 	}
 	
-	protected Method<?> parent;
+	protected Method parent;
 	
-	public final void setParent(Method<?> parent) {
+	public final void setParent(Method parent) {
 		if (parent != null) {
 			parent.addMethodElement(this);
 		}
 		this.parent = parent;
 	}
 	
-	public final Method<?> getParent() {
+	public final Method getParent() {
 		return parent;
 	}
 	
 	
-	public MethodElement(T content, Method<?> parent, int line, FeatureExpr ctx) {
+	public MethodElement(Object content, Method parent, int line, FeatureExpr ctx) {
 		this.content = content;
 		this.parent = parent;
 		this.lineNumber = line;
@@ -113,7 +114,7 @@ public abstract class MethodElement<T> {
 	}
 
 	public String getID() {
-		return TraceUtils.toShortID(id);
+		return TraceUtils.toShortID(elementID);
 	}
 
 	public void setFiltered(boolean filtered) {
@@ -127,4 +128,11 @@ public abstract class MethodElement<T> {
 	public boolean canBeRemoved(int line) {// TODO revise this, seems unnecessary
 		return false;
 	}
+	
+	/**
+	 * returns the simplified Element for the given context.
+	 * @param ctx
+	 * @return
+	 */
+	public abstract MethodElement simplify(FeatureExpr ctx, StatementFilter filter);
 }

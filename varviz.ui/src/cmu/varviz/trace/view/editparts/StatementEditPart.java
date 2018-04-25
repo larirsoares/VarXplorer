@@ -26,24 +26,28 @@ import java.util.List;
 import org.eclipse.draw2d.ConnectionAnchor;
 import org.eclipse.draw2d.IFigure;
 import org.eclipse.gef.ConnectionEditPart;
+import org.eclipse.gef.EditPart;
 import org.eclipse.gef.NodeEditPart;
 import org.eclipse.gef.Request;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Color;
 
-import cmu.varviz.VarvizConstants;
+import cmu.varviz.VarvizColors;
+import cmu.varviz.VarvizException;
 import cmu.varviz.trace.Edge;
 import cmu.varviz.trace.Shape;
 import cmu.varviz.trace.Statement;
+import cmu.varviz.trace.Trace;
 import cmu.varviz.trace.uitrace.GraphicalStatement;
+import cmu.varviz.trace.uitrace.GraphicalTrace;
 import cmu.varviz.trace.uitrace.VarvizEvent;
-import cmu.varviz.trace.view.VarvizView;
 import cmu.varviz.trace.view.figures.IfBranchFigure;
 import cmu.varviz.trace.view.figures.SquareFigure;
 import cmu.varviz.trace.view.figures.StatementFigure;
 
 /**
- * TODO description
+ * The {@link EditPart} representing any kind of statements.
+ * @see {@link StatementFigure}, {@link IfBranchFigure}, {@link SquareFigure}
  * 
  * @author Jens Meinicke
  */
@@ -51,15 +55,19 @@ public class StatementEditPart extends AbstractTraceEditPart implements NodeEdit
 
 	private ConnectionAnchor sourceAnchor = null;
 	private ConnectionAnchor targetAnchor = null;
+	private final Trace trace;
+	private final GraphicalTrace graphicalTrace;
 	
-	public StatementEditPart(Statement<?> statement) {
+	public StatementEditPart(Statement statement, Trace trace, GraphicalTrace graphicalTrace) {
 		super();
+		this.trace = trace;
+		this.graphicalTrace = graphicalTrace;
 		setModel(statement);
 	}
 
 	@Override
 	protected IFigure createFigure() {
-		Statement<?> model = getStatementModel();
+		Statement model = getStatementModel();
 		final Shape shape = model.getShape();
 		if (shape == null) {
 			StatementFigure statementFigure = new StatementFigure(model);
@@ -83,7 +91,7 @@ public class StatementEditPart extends AbstractTraceEditPart implements NodeEdit
 			targetAnchor = boxFigure.getTargetAnchor();
 			return boxFigure;
 		default:
-			throw new RuntimeException("shape not supported: " + shape);
+			throw new VarvizException("shape not supported: " + shape);
 		}
 		
 	}
@@ -94,7 +102,7 @@ public class StatementEditPart extends AbstractTraceEditPart implements NodeEdit
 	protected List<Edge> getModelTargetConnections() {
 		if (connections == null) {
 			connections = new ArrayList<>();
-			for (Edge edge : VarvizView.getTRACE().getEdges()) {
+			for (Edge edge : trace.getEdges()) {
 				if (edge.getTo() == getModel()) {
 					connections.add(edge);
 				}
@@ -105,18 +113,18 @@ public class StatementEditPart extends AbstractTraceEditPart implements NodeEdit
 
 	@Override
 	public void layout() {
-		
+		// nothing here
 	}
 	
-	public Statement<?> getStatementModel() {
-		return (Statement<?>) getModel();
+	public Statement getStatementModel() {
+		return (Statement) getModel();
 	}
 	
 	@Override
 	public void activate() {
-		Statement<?> statementModel = getStatementModel();
-		if (VarvizView.GRAPHICAL_TRACE != null) {
-			GraphicalStatement graphicalStatement = VarvizView.GRAPHICAL_TRACE.getGraphicalStatement(statementModel);
+		Statement statementModel = getStatementModel();
+		if (graphicalTrace != null) {
+			GraphicalStatement graphicalStatement = graphicalTrace.getGraphicalStatement(statementModel);
 			if (graphicalStatement != null) {
 				graphicalStatement.registerUIObject(this);
 			}
@@ -135,7 +143,7 @@ public class StatementEditPart extends AbstractTraceEditPart implements NodeEdit
 	@Override
 	public void performRequest(Request request) {
 		if ("open".equals(request.getType())) {
-			final Statement<?> statement = getStatementModel();
+			final Statement statement = getStatementModel();
 			String file = statement.getParent().getFile();
 			EditorHelper.open(file, statement.getLineNumber());
 		}
@@ -164,8 +172,19 @@ public class StatementEditPart extends AbstractTraceEditPart implements NodeEdit
 	
 	@Override
 	public void propertyChange(VarvizEvent event) {
-		Statement<?> statement = (Statement<?>)getModel();
-		Color color = VarvizConstants.getColor(statement.getColor());
-		figure.setBackgroundColor(color);
+		switch (event.getType()) {
+		case COLOR_CHANGED:
+			Statement statement = (Statement)getModel();
+			Color color = VarvizColors.getColor(statement.getColor());
+			figure.setBackgroundColor(color);
+			break;
+		case BORDER_CHANGED:
+			refreshVisuals();
+			break;
+		case LABEL_CHANGED:
+		case LOCATION_CHANGED:
+		default:
+			throw new VarvizException("Event " + event.getType() + " not supported for " + getClass());
+		}
 	}
 }

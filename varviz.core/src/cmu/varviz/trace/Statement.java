@@ -3,32 +3,20 @@ package cmu.varviz.trace;
 import java.io.PrintWriter;
 
 import cmu.conditional.Conditional;
-import cmu.conditional.One;
 import cmu.varviz.trace.filters.StatementFilter;
 import de.fosd.typechef.featureexpr.FeatureExpr;
 
-@SuppressWarnings("unchecked")
-public class Statement<T> extends MethodElement<T> {
+@SuppressWarnings("rawtypes")
+public class Statement extends MethodElement {
 
-	private Conditional<?> oldValue;
-	private Conditional<?> value;
+	protected Conditional<?> oldValue;
+	protected Conditional<?> value;
 
-	public Conditional<MethodElement<T>> from = (Conditional<MethodElement<T>>) One.NULL;
-	public Conditional<MethodElement<T>> to = (Conditional<MethodElement<T>>) One.NULL;
-
-	public Conditional<MethodElement<T>> getFrom() {
-		return from;
-	}
-
-	public Conditional<MethodElement<T>> getTo() {
-		return to;
-	}
-
-	public Statement(T operation, Method<?> method, int line, FeatureExpr ctx) {
+	public Statement(Object operation, Method method, int line, FeatureExpr ctx) {
 		super(operation, method, line, ctx);
 	}
 
-	public Statement(T operation, Method<?> method, FeatureExpr ctx) {
+	public Statement(Object operation, Method method, FeatureExpr ctx) {
 		this(operation, method, -1, ctx);
 	}
 
@@ -92,7 +80,7 @@ public class Statement<T> extends MethodElement<T> {
 	/**
 	 * If the operation changes a value, this method returns its old value.
 	 */
-	public Conditional<?> getOldValue() {
+	public Conditional getOldValue() {
 		return oldValue;
 	}
 
@@ -103,7 +91,8 @@ public class Statement<T> extends MethodElement<T> {
 	/**
 	 * Returns the value of the statement.
 	 */
-	public Conditional<?> getValue() {
+	
+	public Conditional getValue() {
 		return value;
 	}
 
@@ -123,5 +112,19 @@ public class Statement<T> extends MethodElement<T> {
 
 	public boolean isModificationStatement() {
 		return false;
+	}
+
+	@Override
+	public MethodElement simplify(FeatureExpr ctx, StatementFilter filter) {
+		setCtx(Conditional.simplifyCondition(this.getCTX(), Conditional.additionalConstraint));
+		Conditional<?> value2 = getValue();
+		if (value2 != null) {
+			value2 = value2.simplify(ctx);
+			setValue(value2);
+		}
+		if (getOldValue() != null) {
+			setOldValue(getOldValue().simplify(ctx));
+		}
+		return this;
 	}
 }

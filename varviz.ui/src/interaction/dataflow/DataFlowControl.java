@@ -26,12 +26,12 @@ public class DataFlowControl {
 		return dataInteracList;
 	}
 
-	public void getDataInteraction(Edge edge, List<DataInteraction> dataInteracList, Statement<?> eND) {
+	public void getDataInteraction(Edge edge, List<DataInteraction> dataInteracList, Statement eND) {
 		
 		this.dataInteracList = dataInteracList;
 		
 		FeatureExpr ctx = edge.getCtx();
-		Statement<?> s = (Statement<?>) edge.getTo();// TODO returns also methods
+		Statement s = (Statement) edge.getTo();// TODO returns also methods
 		FeatureExpr sCtx = s.getCTX();	
 		Conditional<?> value = s.getValue();
 		
@@ -118,7 +118,7 @@ public class DataFlowControl {
 			if(s.getTo().toList().get(1).toString().contains("if (") || s.to.toList().get(1).equals(eND)  ){
 				return;
 			}
-			value = ((Statement<?>) s.getTo().toList().get(1)).getValue();
+			value = ((Statement) s.getTo().toList().get(1)).getValue();
 			for (Entry<?, FeatureExpr> e : value.toMap().entrySet()) {
 				FeatureExpr context = e.getValue();
 				System.out.println(context);
@@ -154,13 +154,13 @@ public class DataFlowControl {
 		
 	}
 
-	private void getNextVars(DataInteraction interaction, Statement<?> s, FeatureExpr ctx, FeatureExpr sCtx, Statement<?> eND) {
+	private void getNextVars(DataInteraction interaction, Statement s, FeatureExpr ctx, FeatureExpr sCtx, Statement eND) {
 
 			//s.to = {¬decrypt:null ; decrypt:int Email.encryptionKey =  }
 			if(s.to.size()>1 &&
 				!(s.to.toList().get(1).toString().contains("if (")) && !s.to.toList().get(1).equals(eND) && !(s.to.toList().get(1).toString().contains("return "))){
 				
-				Conditional<?> varValue = ((Statement<?>) s.getTo().toList().get(1)).getValue();
+				Conditional<?> varValue = ((Statement) s.getTo().toList().get(1)).getValue();
 				//Statement<?> nextVar2 = s.getTo().toList().get(0);
 				
 				for (Entry<?, FeatureExpr> e : varValue.toMap().entrySet()) {
@@ -168,7 +168,7 @@ public class DataFlowControl {
 					if(context.collectDistinctFeatures().size()>ctx.size()){
 						//verify if interaction already exists
 						DataInteraction list = isInteractionNew(dataInteracList, context);						
-						Statement<?> var = (Statement<?>) s.to.toList().get(1);
+						Statement var = (Statement) s.to.toList().get(1);
 						boolean sameContext = interaction.getFeatures().equals(getFeaturesFromContext(context));
 						int text = 0;
 						//no caso de a variavel nova ter o mesmo contexto da primeira
@@ -236,7 +236,7 @@ public class DataFlowControl {
 				
 				if (!s.to.toList().get(0).equals(eND)){
 					System.out.println(s.getTo() );
-					Statement<?> nextVar = (Statement<?>) s.getTo().toList().get(0);
+					Statement nextVar = (Statement) s.getTo().toList().get(0);
 					
 					if(nextVar.getCTX().equivalentTo(s.getCTX())){
 						//interaction.setVar( s.to.toList().get(0).toString(), context);

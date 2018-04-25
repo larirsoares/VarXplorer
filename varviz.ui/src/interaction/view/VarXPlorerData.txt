@@ -1,17 +1,26 @@
 noEffectF:
-TeenLine
-Base
-IN_Call_Forwarding
-Call_Waiting
+SECURE_LOGIN
 EffectF:
-Calling_Number_Blocking
-Terminating_Call_Screening
-Call_Forwarding_Busy
+TEMPERATURE
+WEATHER
+SMILEY
+FAHRENHEIT
 EdgesF:
-5
-6
+4
+2
+requires
+3
+4
+suppresses
+3
+2
 suppresses
 VarF:
-5 6 suppress boolean Person.offHook
+4 2 require String c
+4 2 require String weather
+3 4 suppress String c
+3 2 suppress String c
 NumberVarPerEdge:
-5 6 1 suppress
+4 2 2 require
+3 4 1 suppress
+3 2 1 suppress

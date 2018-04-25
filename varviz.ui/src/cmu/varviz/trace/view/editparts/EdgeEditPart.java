@@ -15,11 +15,12 @@ import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
 
 import cmu.conditional.Conditional;
-import cmu.varviz.VarvizConstants;
+import cmu.varviz.VarvizColors;
 import cmu.varviz.VarvizException;
 import cmu.varviz.trace.Edge;
 import cmu.varviz.trace.NodeColor;
 import cmu.varviz.trace.uitrace.GraphicalEdge;
+import cmu.varviz.trace.uitrace.GraphicalTrace;
 import cmu.varviz.trace.uitrace.VarvizEvent;
 import cmu.varviz.trace.uitrace.VarvizEventListener;
 import cmu.varviz.trace.view.VarvizView;
@@ -37,12 +38,14 @@ public class EdgeEditPart extends AbstractConnectionEditPart implements VarvizEv
 	
 	private Label label;
 	private boolean showLabel = false;
+	private final GraphicalTrace graphicalTrace;
 	
-	public EdgeEditPart(Edge edge) {
+	public EdgeEditPart(Edge edge, GraphicalTrace graphicalTrace) {
 		super();
+		this.graphicalTrace = graphicalTrace;
 		setModel(edge);
-		if (VarvizView.GRAPHICAL_TRACE != null) {
-			GraphicalEdge graphicalEdge = VarvizView.GRAPHICAL_TRACE.getGraphicalEdge(edge);
+		if (graphicalTrace != null) {
+			GraphicalEdge graphicalEdge = graphicalTrace.getGraphicalEdge(edge);
 			if (graphicalEdge != null) {
 				graphicalEdge.registerUIObject(this);
 			}
@@ -59,7 +62,7 @@ public class EdgeEditPart extends AbstractConnectionEditPart implements VarvizEv
 			line.setLineDash(new float[]{5, 5});
 		}
 		
-		line.setForegroundColor(VarvizConstants.getColor(edge.getColor()));
+		line.setForegroundColor(VarvizColors.getColor(edge.getColor()));
 		line.setLineWidth(edge.getWidth());
 
 		PolygonDecoration arrow = new PolygonDecoration();
@@ -68,7 +71,7 @@ public class EdgeEditPart extends AbstractConnectionEditPart implements VarvizEv
 		arrowPointList.addPoint(-2, 1);
 		arrowPointList.addPoint(-2, -1);
 		arrow.setTemplate(arrowPointList);
-		arrow.setForegroundColor(VarvizConstants.getColor(edge.getColor()));
+		arrow.setForegroundColor(VarvizColors.getColor(edge.getColor()));
 		line.setTargetDecoration(arrow);
 		
 		refreshLabel(edge, line);
@@ -97,7 +100,7 @@ public class EdgeEditPart extends AbstractConnectionEditPart implements VarvizEv
 		contextLabel.setFont(TEXT_FONT);
 		figure.setToolTip(contextLabel);
 		
-		figure.setForegroundColor(VarvizConstants.getColor(edge.getColor()));
+		figure.setForegroundColor(VarvizColors.getColor(edge.getColor()));
 		((PolylineConnection)figure).setLineWidth(edge.getWidth());
 		
 		refreshLabel(edge);
@@ -108,7 +111,7 @@ public class EdgeEditPart extends AbstractConnectionEditPart implements VarvizEv
 	}
 	
 	private void refreshLabel(Edge edge, PolylineConnection figure) {
-		if (showLabel || (VarvizView.showLables && !Conditional.isTautology(edge.getCtx()))) {
+		if (showLabel || (VarvizView.getInstance().isShowLables() && !Conditional.isTautology(edge.getCtx()))) {
 			createOrSetLabel(edge, figure);
 		} else if (label != null) {
 			figure.remove(label);
@@ -126,11 +129,11 @@ public class EdgeEditPart extends AbstractConnectionEditPart implements VarvizEv
 		// Cambria, Lucida Sans Unicode, Malgun Gothic, Segoe UI Symbol
 		label.setFont(TEXT_FONT);
 		label.setText(EditPartUtils.getContext(edge.getCtx()));
-		label.setForegroundColor(VarvizConstants.BLACK);
+		label.setForegroundColor(VarvizColors.BLACK.getColor());
 		label.setBackgroundColor(new Color(null, 239, 242, 185));
 		figure.add(label, sourceEndpointLocator);
 		label.setOpaque(true);
-		label.setBorder(new LineBorder(VarvizConstants.BLACK));
+		label.setBorder(new LineBorder(VarvizColors.BLACK.getColor()));
 	}
 
 	@Override
@@ -140,10 +143,9 @@ public class EdgeEditPart extends AbstractConnectionEditPart implements VarvizEv
 	
 	@Override
 	public void activate() {
-		// TODO this is not called????
 		Edge edgeModel = getEdgeModel();
-		if (VarvizView.GRAPHICAL_TRACE != null) {
-			GraphicalEdge graphicalEdge = VarvizView.GRAPHICAL_TRACE.getGraphicalEdge(edgeModel);
+		if (graphicalTrace != null) {
+			GraphicalEdge graphicalEdge = graphicalTrace.getGraphicalEdge(edgeModel);
 			if (graphicalEdge != null) {
 				graphicalEdge.registerUIObject(this);
 			}

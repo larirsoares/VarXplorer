@@ -20,17 +20,22 @@
  */
 package cmu.varviz.trace.view.editparts;
 
+import static  cmu.varviz.trace.view.editparts.TraceEditPart.BORDER_MARGIN;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Set;
 
+import javax.annotation.Nullable;
+
 import org.eclipse.draw2d.ConnectionAnchor;
 import org.eclipse.draw2d.IFigure;
 import org.eclipse.draw2d.geometry.Point;
 import org.eclipse.draw2d.geometry.Rectangle;
 import org.eclipse.gef.ConnectionEditPart;
+import org.eclipse.gef.EditPart;
 import org.eclipse.gef.NodeEditPart;
 import org.eclipse.gef.Request;
 import org.eclipse.gef.editparts.AbstractGraphicalEditPart;
@@ -40,31 +45,31 @@ import cmu.varviz.trace.Edge;
 import cmu.varviz.trace.Method;
 import cmu.varviz.trace.MethodElement;
 import cmu.varviz.trace.Statement;
+import cmu.varviz.trace.Trace;
 import cmu.varviz.trace.uitrace.VarvizEvent;
-import cmu.varviz.trace.view.VarvizView;
 import cmu.varviz.trace.view.figures.MethodFigure;
 import de.fosd.typechef.featureexpr.FeatureExpr;
 
 /**
- * TODO description
+ * The {@link EditPart} for methods.
  * 
  * @author Jens Meinicke
  */
 public class MethodEditPart extends AbstractTraceEditPart implements NodeEditPart {
 
-	private final static int BORDER_MARGIN = 10;
-
 	private ConnectionAnchor sourceAnchor = null;
 	private ConnectionAnchor targetAnchor = null;
+	private final Trace trace;
 
-	public MethodEditPart(Method<?> method) {
+	public MethodEditPart(Method method, Trace trace) {
 		super();
+		this.trace = trace;
 		setModel(method);
 	}
 
 	@Override
 	protected IFigure createFigure() {
-		MethodFigure methodFigure = new MethodFigure((Method<?>) getModel());
+		MethodFigure methodFigure = new MethodFigure((Method) getModel());
 		sourceAnchor = methodFigure.getSourceAnchor();
 		targetAnchor = methodFigure.getTargetAnchor();
 
@@ -72,12 +77,13 @@ public class MethodEditPart extends AbstractTraceEditPart implements NodeEditPar
 	}
 
 	@Override
-	protected List<MethodElement<?>> getModelChildren() {
-		List<MethodElement<?>> children = new ArrayList<>();
-		for (MethodElement<?> child : ((Method<?>) getModel()).getChildren()) {
-			children.add(child);
+	protected List<MethodElement> getModelChildren() {
+		List<MethodElement> children = ((Method) getModel()).getChildren();
+		List<MethodElement> modelChildren = new ArrayList<>(children.size());
+		for (MethodElement child : children) {
+			modelChildren.add(child);
 		}
-		return children;
+		return modelChildren;
 	}
 
 	List<Edge> connections;
@@ -86,7 +92,7 @@ public class MethodEditPart extends AbstractTraceEditPart implements NodeEditPar
 	protected List<Edge> getModelTargetConnections() {
 		if (connections == null) {
 			connections = new ArrayList<>();
-			for (Edge edge : VarvizView.getTRACE().getEdges()) {
+			for (Edge edge : trace.getEdges()) {
 				if (edge.getTo() == getModel()) {
 					connections.add(edge);
 				}
@@ -113,13 +119,13 @@ public class MethodEditPart extends AbstractTraceEditPart implements NodeEditPar
 		int maxWidth = 0;
 		AbstractTraceEditPart previousMax = null;
 
-		MethodElement<?> previous = null;
+		MethodElement previous = null;
 		AbstractTraceEditPart previousFigure = null;
 		for (Object object : getChildren()) {
 			if (object instanceof AbstractTraceEditPart) {
 				AbstractTraceEditPart childEditPart = (AbstractTraceEditPart) object;
 
-				MethodElement<?> model = (MethodElement<?>) childEditPart.getModel();
+				MethodElement model = (MethodElement) childEditPart.getModel();
 				FeatureExpr ctx = model.getCTX();
 				if (previous != null) {
 					FeatureExpr prevctx = previous.getCTX();
@@ -130,7 +136,7 @@ public class MethodEditPart extends AbstractTraceEditPart implements NodeEditPar
 						maxWidth = childEditPart.getFigure().getBounds().width;
 						previousMax = childEditPart;
 
-						if (Conditional.equivalentTo(((Method<?>) getModel()).getCTX(), ctx)) {
+						if (Conditional.equivalentTo(((Method) getModel()).getCTX(), ctx)) {
 							// a -> True
 							direction = Direction.CENTER;
 							childEditPart.getFigure().setLocation(new Point(-childEditPart.getFigure().getBounds().width / 2, h));
@@ -240,16 +246,16 @@ public class MethodEditPart extends AbstractTraceEditPart implements NodeEditPar
 		methodFigure.setBounds(bounds);
 	}
 
-	public Method<?> getMethodModel() {
-		return (Method<?>) getModel();
+	public Method getMethodModel() {
+		return (Method) getModel();
 	}
 
 	@Override
 	public void performRequest(Request request) {
 		if ("open".equals(request.getType())) {
-			final Method<?> method = getMethodModel();
+			final Method method = getMethodModel();
 			final int lineNumber = method.getLineNumber();
-			Method<?> parent = method.getParent();
+			Method parent = method.getParent();
 			if (parent != null) {
 				EditorHelper.open(parent.getFile(), lineNumber);
 			}
@@ -257,6 +263,7 @@ public class MethodEditPart extends AbstractTraceEditPart implements NodeEditPar
 		super.performRequest(request);
 	}
 	
+	@Nullable
 	@SuppressWarnings("unchecked")
 	public AbstractGraphicalEditPart getLastTrueStatement() {
 		ListIterator<Object> iterator = getChildren().listIterator(getChildren().size());
@@ -264,7 +271,7 @@ public class MethodEditPart extends AbstractTraceEditPart implements NodeEditPar
 			Object object = iterator.previous();
 			if (object instanceof AbstractGraphicalEditPart) {
 				final AbstractGraphicalEditPart abstractGraphicalEditPart = (AbstractGraphicalEditPart) object;
-				MethodElement<?> element = (MethodElement<?>)abstractGraphicalEditPart.getModel();
+				MethodElement element = (MethodElement)abstractGraphicalEditPart.getModel();
 				if (element.getCTX().isTautology()) {
 					if (element instanceof Statement) {
 						return abstractGraphicalEditPart;
@@ -315,7 +322,7 @@ public class MethodEditPart extends AbstractTraceEditPart implements NodeEditPar
 
 	@Override
 	public void propertyChange(VarvizEvent event) {
-		// TODO Auto-generated method stub
+		// not imeplemented
 		
 	}
 

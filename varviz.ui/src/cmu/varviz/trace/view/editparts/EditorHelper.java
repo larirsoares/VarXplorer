@@ -20,16 +20,21 @@ import org.eclipse.ui.part.FileEditorInput;
 import org.eclipse.ui.texteditor.ITextEditor;
 
 import cmu.varviz.VarvizActivator;
+import cmu.varviz.VarvizException;
 import cmu.varviz.trace.view.VarvizView;
 import gov.nasa.jpf.vm.MethodInfo;
 
 /**
- * TODO description
+ * Helper class to handle the editor.
  * 
  * @author Jens Meinicke
  *
  */
 public class EditorHelper {
+	
+	private EditorHelper() {
+		// nothing here
+	}
 	
 	public static void open(MethodInfo mi, int lineNumber) {
 		IFile file = getFile(mi);
@@ -48,28 +53,19 @@ public class EditorHelper {
 	}
 	
 	private static IFile getFile(String fileName) {
-		IProject prj = ResourcesPlugin.getWorkspace().getRoot().getProject(VarvizView.PROJECT_NAME);		
+		IProject prj = ResourcesPlugin.getWorkspace().getRoot().getProject(VarvizView.getInstance().getProjectName());		
 		IFile file = prj.getFile("src/" + fileName);
 		if (!file.exists()) {
-			prj = ResourcesPlugin.getWorkspace().getRoot().getProject(VarvizView.PROJECT_Sources);		
-			file = prj.getFile(VarvizView.PROJECT_Sources_Folder + "/" + fileName);
-			if (!file.exists()) {
-				file = prj.getFile(VarvizView.PROJECT_Sources_Test_Folder + "/" + fileName);
-			}
+			throw new VarvizException("file " + file.getFullPath() + " does not exist");
 		}
 		return file;
 	}
 	
-	// TODO revise this, iterate over list of possible paths
 	private static IFile getFile(MethodInfo mi) {
-		IProject prj = ResourcesPlugin.getWorkspace().getRoot().getProject(VarvizView.PROJECT_NAME);		
+		IProject prj = ResourcesPlugin.getWorkspace().getRoot().getProject(VarvizView.getInstance().getProjectName());		
 		IFile file = prj.getFile("src/" + mi.getSourceFileName());
 		if (!file.exists()) {
-			prj = ResourcesPlugin.getWorkspace().getRoot().getProject(VarvizView.PROJECT_Sources);		
-			file = prj.getFile(VarvizView.PROJECT_Sources_Folder + "/" + mi.getSourceFileName());
-			if (!file.exists()) {
-				file = prj.getFile(VarvizView.PROJECT_Sources_Test_Folder + "/" + mi.getSourceFileName());
-			}
+			throw new VarvizException("file " + file.getFullPath() + " does not exist");
 		}
 		return file;
 	}
@@ -116,6 +112,7 @@ public class EditorHelper {
 			try {
 				lineInfo = document.getLineInformation(lineNumber - 1);
 			} catch (BadLocationException e) {
+				// ignore
 			}
 			if (lineInfo != null) {
 				editor.selectAndReveal(lineInfo.getOffset(), lineInfo.getLength());

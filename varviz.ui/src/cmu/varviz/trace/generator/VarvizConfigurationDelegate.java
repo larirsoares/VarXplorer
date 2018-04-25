@@ -2,14 +2,12 @@ package cmu.varviz.trace.generator;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.LineNumberReader;
 import java.io.PrintStream;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
-import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IncrementalProjectBuilder;
@@ -19,6 +17,8 @@ import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.jdt.launching.AbstractJavaLaunchConfigurationDelegate;
 import org.eclipse.jdt.launching.ExecutionArguments;
+import org.eclipse.jdt.launching.IRuntimeClasspathEntry;
+import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.launching.VMRunnerConfiguration;
 import org.eclipse.ui.console.ConsolePlugin;
 import org.eclipse.ui.console.IConsole;
@@ -26,24 +26,12 @@ import org.eclipse.ui.console.IConsoleManager;
 import org.eclipse.ui.console.MessageConsole;
 import org.eclipse.ui.console.MessageConsoleStream;
 
-import cmu.conditional.Conditional;
-import cmu.samplej.Collector;
-import cmu.samplej.SampleJMonitor;
 import cmu.varviz.trace.Edge;
 import cmu.varviz.trace.Method;
 import cmu.varviz.trace.Trace;
-import cmu.varviz.trace.filters.And;
-import cmu.varviz.trace.filters.InteractionFilter;
-import cmu.varviz.trace.filters.Or;
 import cmu.varviz.trace.view.VarvizView;
-import cmu.varviz.trace.view.actions.IgnoreContext;
-import cmu.vatrace.ExceptionFilter;
-import de.fosd.typechef.featureexpr.FeatureExpr;
-import de.fosd.typechef.featureexpr.FeatureExprFactory;
-import de.fosd.typechef.featureexpr.bdd.BDDFeatureExprFactory;
-import gov.nasa.jpf.JPF;
+import cmu.varviz.trace.view.actions.Slicer;
 import interaction.InteractionFinder;
-
 
 /**
  * Runs the Java Application to generate the {@link Trace}.
@@ -51,7 +39,7 @@ import interaction.InteractionFinder;
  * @author Jens Meinicke
  *
  */
-public class VarvizConfigurationDelegate extends AbstractJavaLaunchConfigurationDelegate {// TODO JavaLaunchDelegate?
+public class VarvizConfigurationDelegate extends AbstractJavaLaunchConfigurationDelegate {
 
 	@Override
 	public void launch(ILaunchConfiguration configuration, String mode, ILaunch launch, IProgressMonitor monitor) throws CoreException {
@@ -76,9 +64,10 @@ public class VarvizConfigurationDelegate extends AbstractJavaLaunchConfiguration
 			Map<String, Object> vmAttributesMap = getVMSpecificAttributesMap(configuration);
 
 			// Classpath
-			String[] classpath = getClasspath(configuration);
-
+			String[] classpath = getUserClasspath(configuration);
+			
 			// Create VM config
+			
 			VMRunnerConfiguration runConfig = new VMRunnerConfiguration(mainTypeName, classpath);
 			runConfig.setProgramArguments(execArgs.getProgramArgumentsArray());
 			runConfig.setEnvironment(envp);
@@ -97,153 +86,83 @@ public class VarvizConfigurationDelegate extends AbstractJavaLaunchConfiguration
 			// stop in main
 			prepareStopInMain(configuration);
 
-			// set the default source locator if required 
-			//setDefaultSourceLocator(launch, configuration); TODO
+			// set the default source locator if required
+			//setDefaultSourceLocator(launch, configuration);
 
 			// Launch the configuration - 1 unit of work
 			monitor.subTask("Run application with VarexJ");
-			StringBuilder cp = new StringBuilder();
-			for (String c : classpath) {
-				if (!c.contains("JavaVirtualMachines")) {// TODO quick fix ignores JVM classes on Mac, mYBE DUE TO N
-					cp.append(c);
-					cp.append(',');
-				}
-			}
-			cp.append("${jpf-core}");
 
+			final VarvizView view = VarvizView.getInstance();
 			final IResource resource = configuration.getWorkingCopy().getMappedResources()[0];
-
 			IProject project = resource.getProject();
-			MessageConsole myConsole = findAndCreateConsole("VarexJ: " + project.getName() + ":" + runConfig.getClassToLaunch());
+			MessageConsole myConsole = findAndCreateConsole((view.isUseVarexJ() ?"VarexJ: ": "SampleJ: ") + project.getName() + ":" + runConfig.getClassToLaunch());
 			myConsole.clearConsole();
+			
 			PrintStream myPrintStream = createOutputStream(originalOutputStream, myConsole.newMessageStream());
 			System.setOut(myPrintStream);
 
-			VarvizView.PROJECT_NAME = project.getName();
-
-			String featureModelPath = null;
-			for (IResource child : project.members()) {
-				if (child instanceof IFile) {
-					if ("dimacs".equals(child.getFileExtension())) {
-						featureModelPath = child.getRawLocation().toOSString();
-					}
-				}
-			}
-			
-
+			view.setProjectName(project.getName());
 
 			project.build(IncrementalProjectBuilder.FULL_BUILD, monitor);
-			if (VarvizView.useVarexJ) {
-				// TODO move this to VarexJ Generator Class
-				FeatureExprFactory.setDefault(FeatureExprFactory.bdd());
-				final String[] args = { "+classpath=" + cp, "+choice=MapChoice", "+stack=HybridStackHandler", "+nhandler.delegateUnhandledNative", "+search.class=.search.RandomSearch",
-						featureModelPath != null ? "+ featuremodel=" + featureModelPath : "", runConfig.getClassToLaunch() };
-				JPF.vatrace = new Trace();
-				JPF.vatrace.filter = new Or(new And(VarvizView.basefilter, new InteractionFilter(VarvizView.minDegree)), new ExceptionFilter());
-				FeatureExprFactory.setDefault(FeatureExprFactory.bdd());
-				JPF.main(args);
-				Conditional.additionalConstraint = BDDFeatureExprFactory.True();
-	
-				if (false && VarvizView.reExecuteForExceptionFeatures) {
-					FeatureExpr exceptionContext = JPF.vatrace.getExceptionContext();
-					IgnoreContext.removeContext(exceptionContext);
-					if (!JPF.ignoredFeatures.isEmpty()) {
-						// second run for important features
-						myConsole = findAndCreateConsole("VarexJ: " + project.getName() + ":" + runConfig.getClassToLaunch() + " (exception features only)");
-						myConsole.clearConsole();
-						PrintStream consoleStream = createOutputStream(originalOutputStream, myConsole.newMessageStream());
-						System.setOut(consoleStream);
-						JPF.vatrace = new Trace();
-						JPF.vatrace.filter = new Or(new And(VarvizView.basefilter, new InteractionFilter(VarvizView.minDegree)), new ExceptionFilter());
-						JPF.main(args);
-						Conditional.additionalConstraint = BDDFeatureExprFactory.True();
-						JPF.ignoredFeatures.clear();
-					}
-				}
-				
-				JPF.vatrace.finalizeGraph();
-				VarvizView.setTRACE(JPF.vatrace);
-			} else {
-				// TODO move to SampleJ builder
-				// run SampleJ
-				final SampleJMonitor samplejMonitor = new SampleJMonitor() {
-					@Override
-					public void beginTask(String name, int totalWork) {
-						monitor.beginTask(name, totalWork);
-					}
-					
-					@Override
-					public void worked(int work) {
-						monitor.worked(work);
-					}
-				};
-				
-				Conditional.setFM(getFeatureModel(resource));
-				Collector collector = new Collector(getOptions(resource));
-				String projectPath = project.getLocation().toOSString();
-				try {
-					Collector.FILTER = new Or(new And(VarvizView.basefilter, new InteractionFilter(VarvizView.minDegree)),
-							new ExceptionFilter());
-					VarvizView.setTRACE(collector.createTrace(runConfig.getClassToLaunch(), projectPath, runConfig.getClassPath(),
-							samplejMonitor));
-				} finally {
-					project.build(IncrementalProjectBuilder.FULL_BUILD, monitor);
-				}
+			Trace trace = view.getGenerator().run(runConfig, resource, monitor, classpath);
+			
+			if (view.isShowForExceptionFeatures()) {
+				Slicer.sliceForExceptiuon(trace, view.getGenerator());
 			}
+			trace.finalizeGraph();
+			view.setTrace(trace);
+							
+			
+			if (view.getTRACE().getMain().size() < 10_000) {
+				view.refreshVisuals();
+			}
+			
 			
 			//XXX Lari: interaction finder
-			try {			
-			Method<?> mainMethod = VarvizView.getTRACE().getMain();	
-			List<Edge> ed = VarvizView.getTRACE().getEdges();
+						
+			Method mainMethod = view.getTRACE().getMain();	
+			List<Edge> ed = view.getTRACE().getEdges();
 			
 			InteractionFinder finder = new InteractionFinder(mainMethod, ed);
-			finder.findInteractions(workingDir);			
-
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-			VarvizView.refreshVisuals();
+			finder.findInteractions(workingDir);	
 
 			// check for cancellation
 			if (monitor.isCanceled()) {
 				return;
 			}
-		} finally {
+			VarvizView.checked.clear();
 			monitor.done();
 			System.setOut(originalOutputStream);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
 		}
 	}
 
-	private String getFeatureModel(IResource resource) {
+	/** 
+	 *  returns the user specified classpath entries.
+	 *  the eclipse implementations changed with version Oxigen.3 and {@link AbstractJavaLaunchConfigurationDelegate#getClassPath} 
+	 *  returns JVM classes that must not be contained for VarexJ.
+	 */
+	private String[] getUserClasspath(ILaunchConfiguration config) {
+		IRuntimeClasspathEntry[] entries;
 		try {
-			for (IResource child : resource.getProject().members()) {
-				if ("dimacs".equals(child.getFileExtension())) {
-					return child.getLocation().toOSString();
-				}
-			}
+			entries = JavaRuntime.computeUnresolvedRuntimeClasspath(config);
+			entries = JavaRuntime.resolveRuntimeClasspath(entries, config);
 		} catch (CoreException e) {
 			e.printStackTrace();
+			return new String[0];
 		}
-		return "";
+		Set<String> classpathEntries = new HashSet<>(entries.length);
+		for (IRuntimeClasspathEntry entry : entries) {
+			String location = entry.getLocation();
+			if (location != null && entry.getClasspathProperty() == IRuntimeClasspathEntry.USER_CLASSES && !classpathEntries.contains(location)) {
+				classpathEntries.add(location);
+			}
+		}
+		
+		return classpathEntries.toArray(new String[classpathEntries.size()]);
 	}
 
-	private String[] getOptions(IResource resource) {
-		IFile optionsFile = resource.getProject().getFile("options.txt");
-		List<String> options = new ArrayList<>();
-		
-		try (LineNumberReader reader = new LineNumberReader(new InputStreamReader(optionsFile.getContents(true), optionsFile.getCharset()))) {
-			String line; 
-			while ((line = reader.readLine()) != null) {
-				System.out.println(line);
-				options.add(line.trim());
-			}
-		} catch (IOException | CoreException e) {
-			e.printStackTrace();
-		}
-		final String[] optionsArr = new String[options.size()];
-		options.toArray(optionsArr);
-		return optionsArr;
-	}
 
 	private PrintStream createOutputStream(PrintStream originalOut, final MessageConsoleStream consoleStream) {
 		return new PrintStream(originalOut) {
@@ -291,7 +210,7 @@ public class VarvizConfigurationDelegate extends AbstractJavaLaunchConfiguration
 		IConsole[] existing = conMan.getConsoles();
 		for (int i = 0; i < existing.length; i++) {
 			if (name.equals(existing[i].getName())) {
-				return (MessageConsole) existing[i];
+				return ((MessageConsole) existing[i]);//.destroy();
 			}
 		}
 		// no console found, so create a new one

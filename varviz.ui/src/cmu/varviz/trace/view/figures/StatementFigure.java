@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import org.eclipse.draw2d.Figure;
 import org.eclipse.draw2d.FreeformLayout;
 import org.eclipse.draw2d.Label;
 import org.eclipse.draw2d.RoundedRectangle;
@@ -14,14 +15,14 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Font;
 
 import cmu.conditional.Conditional;
-import cmu.varviz.VarvizConstants;
+import cmu.varviz.VarvizColors;
 import cmu.varviz.trace.NodeColor;
 import cmu.varviz.trace.Statement;
 import cmu.varviz.trace.view.editparts.EditPartUtils;
 import de.fosd.typechef.featureexpr.FeatureExpr;
 
 /**
- * TODO description
+ * The {@link Figure} representing Statements and Parameters. 
  * 
  * @author Jens Meinicke
  *
@@ -33,21 +34,22 @@ public class StatementFigure extends RoundedRectangle {
 	private static final Font ARROW_FONT = new Font(null, FONT_NAME, 16, SWT.BOLD);
 	private static final Font TEXT_FONT = new Font(null, FONT_NAME, 12, SWT.NORMAL);
 
-	private Statement<?> statement;
+	private static final int BORDER_MARGIN = 10;
+	private static final int MIN_WIDTH = 20;
+	
+	private Statement statement;
 	private final Label label = new Label();
 	private final Label a = new Label();
 	private final Label b = new Label();
 	private SourceAnchor sourceAnchor;
 	private TargetAnchor targetAnchor;
-	private static final int BORDER_MARGIN = 10;
-	private static final int MIN_WIDTH = 20;
 
-	public StatementFigure(Statement<?> statement) {
+	public StatementFigure(Statement statement) {
 		super();
 		this.statement = statement;
 		this.setLayoutManager(new FreeformLayout());
 		NodeColor color = statement.getColor();
-		setBackgroundColor(VarvizConstants.getColor(color));
+		setBackgroundColor(VarvizColors.getColor(color));
 		setCornerDimensions(new Dimension(20, 20));
 		if (statement.getValue() != null) {
 			createLabelName();
@@ -88,7 +90,7 @@ public class StatementFigure extends RoundedRectangle {
 		this.setOpaque(true);
 
 		sourceAnchor = new SourceAnchor(this, statement);
-		targetAnchor = new TargetAnchor(this, statement);
+		targetAnchor = new TargetAnchor(this);
 	}
 
 	private void createLabelName() {
@@ -111,28 +113,26 @@ public class StatementFigure extends RoundedRectangle {
 	private String createText(Conditional<?> value) {
 		if (value.isOne()) {
 			return value.getValue() == null ? "null" : value.getValue().toString();
-		} else {
-			final Collection<?> entries = value.toMap().keySet();
-			int maxLength = 0;
-			for (Object object : entries) {
-				maxLength = Math.max(object.toString().length(), maxLength);
-			}
-
-			final List<FeatureExpr> sortedExpressions = new ArrayList<>();
-			sortedExpressions.addAll(value.toMap().values());
-//			Collections.sort(sortedExpressions, (o1, o2) -> o1.toString().replaceAll("!", "Z").compareToIgnoreCase(o2.toString().replaceAll("!", "Z")));
-
-			final StringBuilder text = new StringBuilder();
-			for (FeatureExpr context : sortedExpressions) {
-				final String valueText = value.simplify(context).toString();
-				text.append(valueText);
-				text.append(new String(new char[maxLength - valueText.length()]));
-				text.append(" : ");
-				text.append(EditPartUtils.getContext(context));
-				text.append('\n');
-			}
-			return text.subSequence(0, text.length() - 1).toString();
 		}
+		final Collection<?> entries = value.toMap().keySet();
+		int maxLength = 0;
+		for (Object object : entries) {
+			maxLength = Math.max(object.toString().length(), maxLength);
+		}
+
+		final List<FeatureExpr> sortedExpressions = new ArrayList<>();
+		sortedExpressions.addAll(value.toMap().values());
+
+		final StringBuilder text = new StringBuilder();
+		for (FeatureExpr context : sortedExpressions) {
+			final String valueText = value.simplify(context).toString();
+			text.append(valueText);
+			text.append(new String(new char[maxLength - valueText.length()]));
+			text.append(" : ");
+			text.append(EditPartUtils.getContext(context));
+			text.append('\n');
+		}
+		return text.subSequence(0, text.length() - 1).toString();
 	}
 
 	private void createLabelNew(int x) {

@@ -48,10 +48,10 @@ public class InteractionFinder {
 	private ArrayList<Specification> specList = new ArrayList<>();
 	private Boolean isSpecOn = false;
 	
-	private Method<?> mainMethod;
+	private Method mainMethod;
 	private List<Edge> edges;
 	
-	public InteractionFinder(Method<?> mainMethod, List<Edge> ed) {
+	public InteractionFinder(Method mainMethod, List<Edge> ed) {
 		super();
 		this.mainMethod = mainMethod;
 		this.edges = ed;
@@ -340,18 +340,18 @@ public class InteractionFinder {
 
 	//getting all the variables of the trace
 	public void collectVarExpressions() {
-		List<MethodElement<?>> children = this.mainMethod.getChildren();
+		List<MethodElement> children = this.mainMethod.getChildren();
 		recursiveMethod(children.get(0));	
 		
 	}
-	private void recursiveMethod(MethodElement<?> methodElement){
+	private void recursiveMethod(MethodElement methodElement){
 		
 			if (methodElement instanceof Method) {
 				System.out.println(methodElement);
 				List a = ((Method) methodElement).getChildren();
 				
 				for(int i=0; i<a.size(); i++){
-					recursiveMethod((MethodElement<?>) a.get(i));
+					recursiveMethod((MethodElement) a.get(i));
 				}
 			} else {
 				if(methodElement instanceof LocalStoreStatement || methodElement instanceof FieldPutStatement){
