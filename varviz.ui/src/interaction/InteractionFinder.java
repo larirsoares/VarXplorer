@@ -112,44 +112,46 @@ public class InteractionFinder {
 		//relationships from presence conditions
 		List<ControInteraction> controlFlowInteracList = finder.getInteractionList();
 				
-//		if(isSpecificationOn()){
-//			treatSpecification(finder);
-//		}
+		if(isSpecificationOn()){
+			treatSpecification(finder);
+		}
 	
 		
 		InteractGraph g = new InteractGraph(interactionsPerVarList, specList, workingDir);		
-		//g.createGraphInter(hashMap, finder.getFeatures(), finder.getNoEffectlist(), expressions);	
 		
 		System.out.println(workingDir.getAbsolutePath());
 		
+		//it creates the resulting graph and already removes interactions from spec
 		InteractionCreator resultingGraph = new InteractionCreator(hashMap, finder.getFeatures(), finder.getNoEffectlist(), expressions,
 				interactionsPerVarList, specList);
 		ArrayList<Interaction> finalList = resultingGraph.getInteractionsToShow();
+		ArrayList<Interaction> typeTOTALinteractionsList = resultingGraph.getInteractionsOFtypeTOTAL();//receives interactions that are not partial
+		
 		printFinalList(finalList, resultingGraph);
 		
 		//creating dot graph
 		DotGraph dot = new DotGraph();
 		dot.createGraph(finalList, resultingGraph, workingDir, expressions);
 		GraphFile file = new GraphFile();
-		file.createFile(finalList, resultingGraph, workingDir, expressions);
+		file.createFile(finalList, resultingGraph, workingDir, expressions, typeTOTALinteractionsList);
 		try {
 			file.write(finalList, resultingGraph, workingDir, expressions);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
 		//creating JgraphX
 		List<String> finalString = file.getFileList();
 		List<String> edgestoGraphx = file.getEdgestoGraphx();
-		edgestoGraphx = preProcessingEdges(edgestoGraphx);
-		createJGraphX(finalString, resultingGraph,edgestoGraphx);
+		edgestoGraphx = preProcessingEdges(edgestoGraphx); //remove repeated pairs
+		List<String> reducedEdges = file.getEdgestoGraphxREDUCED();//edgestoGraphx without vars of interactions of type total
+//		createJGraphX(finalString, resultingGraph,edgestoGraphx);
+		createJGraphX(finalString, resultingGraph,reducedEdges);
 	}
 	
 
-
 	private List<String> preProcessingEdges(List<String> edgestoGraphx) {
-		List<String> newList = new ArrayList<>(); //F1, F2, relation, variables
+		List<String> newList = new ArrayList<>(); //Order: F1, F2, relation, variables
 		List<String> pairsList = new ArrayList<>();
 		for(int i=0; i<edgestoGraphx.size(); i++){
 			String toNotRepeatPair = edgestoGraphx.get(i)+ edgestoGraphx.get(i+1)+edgestoGraphx.get(i+2);
@@ -203,7 +205,7 @@ public class InteractionFinder {
 	private void createJGraphX(List<String> finalString, InteractionCreator resultingGraph, List<String> edgestoGraphx) {
 		
 		List<String> noeffectGraph =  new ArrayList<>();
-		for (SingleFeatureExpr feature1 : resultingGraph.getNoEffectlist()) {
+		for (SingleFeatureExpr feature1 : resultingGraph.getNoEffectlist()) {//creates no effect list
 			 String f = Conditional.getCTXString(feature1);
 			noeffectGraph.add(f);		
 		}

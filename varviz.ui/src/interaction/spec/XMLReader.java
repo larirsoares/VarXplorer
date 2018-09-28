@@ -35,7 +35,7 @@ public class XMLReader {
 		Specification spec = specControl.createAllowReq(a[0], a[1], var)
 		 */
 		int t = 0;
-		File fXmlFile = new File("/Users/larissasoares/git/fork/varviz/varviz.ui/src/interaction/spec/specXML.xml");
+		File fXmlFile = new File("/Users/larirocha/git/VarXplorer/varviz.ui/src/interaction/spec/specXML.xml");
 		DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder dBuilder;
 	    Document doc = null;
@@ -68,8 +68,10 @@ public class XMLReader {
 				String from = eElement.getFirstChild().getAttributes().item(0).getTextContent();
 				String to = eElement.getFirstChild().getAttributes().item(1).getTextContent();
 				
-				//Node relationNode = eElement.getFirstChild().getNextSibling();
-				Node var = eElement.getFirstChild().getFirstChild();
+				Node var = null; 
+				if(eElement.getFirstChild().hasChildNodes()) {
+					var = eElement.getFirstChild().getFirstChild();
+				}
 				
 //				//if it has 1 var
 //				String vAttributes = var.getAttributes().item(0).getTextContent();//<var name="String c"/>				

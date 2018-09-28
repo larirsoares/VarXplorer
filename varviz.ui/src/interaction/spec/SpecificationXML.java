@@ -52,10 +52,11 @@ public class SpecificationXML {
 				TransformerFactory transformerFactory = TransformerFactory.newInstance();
 				Transformer transformer = transformerFactory.newTransformer();
 				DOMSource source = new DOMSource(doc);
-				StreamResult result = new StreamResult(new File("/Users/larissasoares/git/fork/varviz/varviz.ui/src/interaction/spec/" + "specXML.xml"));
+				StreamResult result = new StreamResult(new File("/Users/larirocha/git/VarXplorer/varviz.ui/src/interaction/spec/" + "specXML.xml"));
 
 				transformer.transform(source, result);
-
+				
+				int apagar = 1;
 				System.out.println("File saved!");
 
 			  } catch (ParserConfigurationException pce) {
@@ -69,7 +70,7 @@ public class SpecificationXML {
 		this.allOptionsSelected = allOptionsSelected;
 		  
 		  try {
-				String filepath = "/Users/larissasoares/git/fork/varviz/varviz.ui/src/interaction/spec/specXML.xml";
+				String filepath = "/Users/larirocha/git/VarXplorer/varviz.ui/src/interaction/spec/specXML.xml";
 				DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
 				DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
 				Document doc = docBuilder.parse(filepath);
@@ -87,7 +88,10 @@ public class SpecificationXML {
 						String popSupORreq = info[1];
 						String popFrom = specpop.getFrom();
 						String popTo = specpop.getTo();
-						String popVar = info[3] + " " + info[4];
+						String popVar="";//in case there is no var
+						if(info.length>4) {
+							popVar = info[3] + " " + info[4];
+						}
 						
 						//uma vez que peguei toda info do pop eu tenho que saber se já tem 
 						NodeList nList = doc.getElementsByTagName("specification");
@@ -103,7 +107,10 @@ public class SpecificationXML {
 								String relation = eElement.getFirstChild().getNodeName();//suppress or require
 								String from = eElement.getFirstChild().getAttributes().item(0).getTextContent();
 								String to = eElement.getFirstChild().getAttributes().item(1).getTextContent();
-								String var = eElement.getFirstChild().getFirstChild().getAttributes().item(0).getTextContent();
+								String var="";
+								if(eElement.getFirstChild().hasChildNodes()) {
+									var = eElement.getFirstChild().getFirstChild().getAttributes().item(0).getTextContent();
+								}
 								
 								//if just the type is different, such is allow, then update to forbid
  								if(popFrom.equals(from) && popTo.equals(to) && popSupORreq.contains(relation) && popVar.equals(var)
@@ -217,15 +224,25 @@ public class SpecificationXML {
 		String[] info = specpop.getInfo().split(" ");
 		// firstname elements
 		Element spec = doc.createElement("specification");
-		spec.setAttribute("type", info[0]);
+		
+		char digit = info[0].charAt(0);//testing fist argument of the popup or second, one has a number
+		int infoPosition = 0;
+		if(Character.isDigit(digit)) {
+			infoPosition = 1;
+		}else {
+			infoPosition = 0;
+		}
+		
+		
+		spec.setAttribute("type", info[infoPosition]);
 		rootElement.appendChild(spec);
 		Element supreq = null;
-		if(info[1].contains("sup")){
+		if(info[infoPosition+1].contains("sup")){
 			supreq = doc.createElement("suppress");
 			supreq.setAttribute("from", specpop.getFrom());
 			supreq.setAttribute("to", specpop.getTo());
 			spec.appendChild(supreq);
-		}else if(info[1].contains("requi")){
+		}else if(info[infoPosition+1].contains("requi")){
 			supreq = doc.createElement("require");
 			supreq.setAttribute("from", specpop.getFrom());
 			supreq.setAttribute("to", specpop.getTo());
@@ -233,10 +250,13 @@ public class SpecificationXML {
 		}
 		
 		//caso tenha, colocar as var
-		if(info[2].equals("on")){
-			Element var = doc.createElement("var");
-			var.setAttribute("name", info[3] + " " + info[4]);
-			supreq.appendChild(var);
+		if(info[infoPosition+2].equals("on")){
+			if(info.length>4) {//which means if there is any variable, the variable would be on info[4] and info[5]
+				Element var = doc.createElement("var");
+				var.setAttribute("name", info[infoPosition+3] + " " + info[infoPosition+4]);
+				supreq.appendChild(var);
+			}
+			
 		}		
 	}
 

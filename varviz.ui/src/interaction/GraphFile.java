@@ -28,10 +28,14 @@ public class GraphFile {
 	public List<String> getEdgestoGraphx() {
 		return edgestoGraphx;
 	}
+	private List<String> edgestoGraphxREDUCED = new ArrayList<>();
+	public List<String> getEdgestoGraphxREDUCED() {
+		return edgestoGraphxREDUCED;
+	}
 
 	int cGraphX = 0;
 	
-	public void createFile(ArrayList<Interaction> finalList, InteractionCreator resultingGraph, File workingDir, List<FeatureExpr> expressions) {
+	public void createFile(ArrayList<Interaction> finalList, InteractionCreator resultingGraph, File workingDir, List<FeatureExpr> expressions, ArrayList<Interaction> typeTOTALinteractionsList) {
 				
 
 		featuresList = new String[resultingGraph.getFeatures().size()];
@@ -115,12 +119,20 @@ public class GraphFile {
 				edgestoGraphx.add(name);
 				edgestoGraphx.add(shownVars);
 				
+				//edges without vars when the relation is type total				
+				edgestoGraphxREDUCED.add(A);
+				edgestoGraphxREDUCED.add(B);
+				edgestoGraphxREDUCED.add(name);
+				if(!isTypeTotal(typeTOTALinteractionsList, A, B, "Require")) {
+					edgestoGraphxREDUCED.add(shownVars);
+				}else {
+					edgestoGraphxREDUCED.add("");
+				}
+												
 				//save the vars to the file
 				getVarsToFile(idA, idB, "require", shownVars);
 				
-			}else if(relation.equals("Suppress")){
-						
-				
+			}else if(relation.equals("Suppress")){										
 				//Edge edge = new Edge(A,B);
 				FileList.add(Integer.toString(idA));
 				FileList.add(Integer.toString(idB));
@@ -132,13 +144,29 @@ public class GraphFile {
 				String name = "suppresses";
 				name += "\n";
 				edgestoGraphx.add(name);
-				edgestoGraphx.add(shownVars);
+				edgestoGraphx.add(shownVars);			
+				
+				//edges without vars when the relation is type total				
+				edgestoGraphxREDUCED.add(A);
+				edgestoGraphxREDUCED.add(B);
+				edgestoGraphxREDUCED.add(name);
+				if(!isTypeTotal(typeTOTALinteractionsList, A, B, "Suppress")) {
+					edgestoGraphxREDUCED.add(shownVars);
+				}else {
+					edgestoGraphxREDUCED.add("");
+				}
 
 			}else{
 				edgestoGraphx.add(A);
 				edgestoGraphx.add(B);
 				edgestoGraphx.add("no relationship \n");
 				edgestoGraphx.add(shownVars);
+				
+				//edges without vars when the relation is type total				
+				edgestoGraphxREDUCED.add(A);
+				edgestoGraphxREDUCED.add(B);
+				edgestoGraphxREDUCED.add("no relationship \n");
+				edgestoGraphxREDUCED.add("");
 				
 				getVarsToFile(idA, idB, "no relationship", shownVars);
 					
@@ -157,6 +185,25 @@ public class GraphFile {
 		 
 	}
 	
+	private boolean isTypeTotal(ArrayList<Interaction> typeTOTALinteractionsList, String a, String b, String name) {
+		for(Interaction inter: typeTOTALinteractionsList){
+			String A = Conditional.getCTXString(inter.getPair().getA());
+			String B = Conditional.getCTXString(inter.getPair().getB());
+			
+			String relation = "";
+			if(!inter.getRelations().isEmpty()){
+				relation = inter.getRelations().get(0).getRelation();
+			}
+			if(A.equals(a) && B.equals(b) && relation.equals(name)) {
+				return true;
+			}
+			
+		}
+		
+		return false;
+	}
+
+
 	//get the vars to save in the file
 	private void getVarsToFile(int idA, int idB, String type, String shownVars) {
 		String[] eachvar = shownVars.split("\n");

@@ -79,7 +79,7 @@ public class ClickHandler extends JFrame
 	
 	}
 
-	private void applySpec(ArrayList<Specification> specList) {
+	private void applySpec(ArrayList<Specification> specList) {//here just treats forbid, how about allow??
 		if(specList != null){
 			for(Specification spec: specList){
 				if(spec.getType().getName().equals("Forbid")){
@@ -138,7 +138,7 @@ public class ClickHandler extends JFrame
 
 			private void newGraphGeneration() {
 				
-				List<String> edgesListnew = treatNewGraphInfo();
+				List<String> edgesListnew = treatNewGraphInfo();//removing from the new graph, the interactions marked as allowed
 				graphDataList.add(2, edgesListnew);
 				ClickHandlerNewGraph framenew = new ClickHandlerNewGraph(graphDataList);
 				framenew.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -157,7 +157,7 @@ public class ClickHandler extends JFrame
 				for(PopOption p: allOptionsSelected){
 					if(p.getState()){
 						String[] info = p.getInfo().split(" ");
-						if(info[0].contains("Allow")){//allow
+						if(info[1].contains("Allow")){//allow
 							
 							for(int i=0; i<edgesList.size();i++){
 								String from = edgesList.get(i);
@@ -165,15 +165,11 @@ public class ClickHandler extends JFrame
 								
 								if(from.equals(p.getFrom()) && to.equals(p.getTo())){
 									String[] vars = edgesListNew.get(i+3).split(" |\n");
-									if(vars.length == 2){
-//										edgesListNew.remove(i);									
-//										edgesListNew.remove(i);
-//										edgesListNew.remove(i);
-//										edgesListNew.remove(i);
+									if(vars.length == 2 || edgesListNew.get(i+3).equals("")){//when there is 1 var (length=2) or there's no var
 										edgesListNew.set(i, null);									
 										edgesListNew.set(i+1, null);	
 										edgesListNew.set(i+2, null);	
-										edgesListNew.set(i+3, null);	
+										edgesListNew.set(i+3, null);		
 									}else{
 										String newVars = "";	
 										int countpar = 0;
@@ -220,6 +216,8 @@ public class ClickHandler extends JFrame
 		{
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				applySpec(specList);
+				
 				String text = "";
 				for(int j=0; j<forbidEdgesList.size();j++){//F1, F2, relation, variables
 					text = text + "Forbidded " + forbidEdgesList.get(j+2) + " from " + forbidEdgesList.get(j) + " to " + forbidEdgesList.get(j+1) + " on " + forbidEdgesList.get(j+3) + "\n";
@@ -443,6 +441,15 @@ public class ClickHandler extends JFrame
 				//number of vars:
 				String[] t = edgesList.get(i+3).split ("\n");
 				int numberVars = t.length;
+				String numberOfVarsToShow = "";//it's empty when the relation is total instead of partial
+				String arrowDesignRequire = "strokeColor=green;verticalLabelPosition=middle";//to create dashed and full lines
+				String arrowDesignSuppress = "strokeColor=red;verticalAlign=top;verticalLabelPosition=bottom;labelPosition=left";//to create dashed and full lines
+				if(!edgesList.get(i+3).equals("")) {
+					numberOfVarsToShow = " ("+numberVars+")";
+					arrowDesignRequire = "strokeColor=green;dashed=true;verticalLabelPosition=middle";
+					arrowDesignSuppress = "strokeColor=red;dashed=true;verticalAlign=top;verticalLabelPosition=bottom;labelPosition=left";
+				}
+				
 				
 				// checking if there are 2 or more edges  that are equal
 				String doubleEdge = edgesList.get(i+2)+fromString+toString;//ex.: "requires\n45"
@@ -451,11 +458,10 @@ public class ClickHandler extends JFrame
 				
 				}else{
 					if(edgesList.get(i+2).equals("requires\n")){
-						if(isforbidden(fromString, toString, "Require")){
-							//v = graph.insertEdge(parent, null, edgesList.get(i+2) + edgesList.get(i+3), from, to, "strokeColor=purple;strokeWidth=10");						
-							v = graph.insertEdge(parent, null, edgesList.get(i+2) + " ("+numberVars+")", from, to, "strokeColor=purple;strokeWidth=10");													
+						if(isforbidden(fromString, toString, "Require")){						
+							v = graph.insertEdge(parent, null, edgesList.get(i+2) + numberOfVarsToShow, from, to, "strokeColor=purple;strokeWidth=10");													
 						}else{
-							v = graph.insertEdge(parent, null, edgesList.get(i+2)+ " ("+numberVars+")", from, to, "strokeColor=green;dashed=true;verticalLabelPosition=middle");				
+							v = graph.insertEdge(parent, null, edgesList.get(i+2)+ numberOfVarsToShow, from, to, arrowDesignRequire);				
 						}
 						notRepeatingEdgeList.add(edgesList.get(i+2)+fromString+toString);
 						notRepeatingEdgeList.add(edgesList.get(i+3));
@@ -463,9 +469,9 @@ public class ClickHandler extends JFrame
 					}
 					else if(edgesList.get(i+2).equals("suppresses\n")){
 						if(isforbidden(fromString, toString, "Suppress")){
-							v = graph.insertEdge(parent, null, edgesList.get(i+2)+ " ("+numberVars+")", from, to, "strokeColor=purple;strokeWidth=10;verticalAlign=top;verticalLabelPosition=bottom");
+							v = graph.insertEdge(parent, null, edgesList.get(i+2)+ numberOfVarsToShow, from, to, "strokeColor=purple;strokeWidth=10;verticalAlign=top;verticalLabelPosition=bottom");
 						}else{
-							v = graph.insertEdge(parent, null, edgesList.get(i+2)+ " ("+numberVars+")", from, to, "strokeColor=red;dashed=true;verticalAlign=top;verticalLabelPosition=bottom;labelPosition=left");//"strokeColor=red;dashed=true;ROUNDED"
+							v = graph.insertEdge(parent, null, edgesList.get(i+2)+ numberOfVarsToShow, from, to, arrowDesignSuppress);//"strokeColor=red;dashed=true;ROUNDED"
 						}
 						notRepeatingEdgeList.add(edgesList.get(i+2)+fromString+toString);
 						notRepeatingEdgeList.add(edgesList.get(i+3));

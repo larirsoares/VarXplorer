@@ -17,7 +17,8 @@ import interaction.types.VarInteraction;
 public class InteractionCreator {
 	
 	private ArrayList<Interaction> interactionsList;
-	
+	private ArrayList<Interaction> interactionsOFtypeTOTAL;
+
 	private List<SingleFeatureExpr> noEffectlist;
 	private List<SingleFeatureExpr> doNotInterctList;
 	private Map<PairExp, List<String>> hashMap;
@@ -50,6 +51,7 @@ public class InteractionCreator {
 		this.specList = specList;
 		
 		this.interactionsList = new ArrayList<>();
+		this. interactionsOFtypeTOTAL = new ArrayList<>();
 		this.removedInteractions = new ArrayList<>();
 	}
 
@@ -79,11 +81,15 @@ public class InteractionCreator {
 						}	
 						
 						getPerRelation(A, B, pair, exp, "Require");
-					
+						getInteractionsOFtypeTOTAL(A, B, pair, exp, "Require");
 					}
 					else if(exp.contains("suppresses")){
+						if(treatSpec(pair, hashMap)){
+							continue;
+						}
 						
 						getPerRelation(A, B, pair, exp, "Suppress");
+						getInteractionsOFtypeTOTAL(A, B, pair, exp, "Suppress");
 					}
 				}		
 		}
@@ -161,6 +167,7 @@ public class InteractionCreator {
 			Interaction iinteraction = new Interaction();
 			iinteraction.setPair(pair.getKey().getA(), pair.getKey().getB());
 			interactionsList.add(iinteraction);
+			System.out.println("There is no variable in the par");
 		}
 		
 	}
@@ -262,6 +269,28 @@ public class InteractionCreator {
 			}
 		}
 		return false;
+	}
+
+	private void getInteractionsOFtypeTOTAL(String A, String B, Entry<PairExp, List<String>> pair, String exp, String relationType) {
+		Interaction interactionT = new Interaction();	
+		interaction.Relationship relation = new interaction.Relationship();
+		
+		//create A to B
+		if(exp.startsWith(A)){									
+			interactionT.setPair(pair.getKey().getA(), pair.getKey().getB());						
+		}
+		//create B to A
+		else{						
+			interactionT.setPair(pair.getKey().getB(), pair.getKey().getA());
+		}
+		relation.setRelation(relationType);
+		interactionT.setRelation(relation);
+		interactionsOFtypeTOTAL.add(interactionT);
+		
+	}
+	
+	public ArrayList<Interaction> getInteractionsOFtypeTOTAL() {
+		return interactionsOFtypeTOTAL;
 	}
 }
 

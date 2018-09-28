@@ -1,26 +1,17 @@
 noEffectF:
-SECURE_LOGIN
+Speaker
+Reviewer
+ActivityTutorial
+ActivityWorkshop
+Organizer
 EffectF:
-TEMPERATURE
-WEATHER
-SMILEY
-FAHRENHEIT
+Activity
+Event
 EdgesF:
-4
-2
-requires
-3
-4
-suppresses
-3
-2
+6
+5
 suppresses
 VarF:
-4 2 require String c
-4 2 require String weather
-3 4 suppress String c
-3 2 suppress String c
+6 5 suppress int a
 NumberVarPerEdge:
-4 2 2 require
-3 4 1 suppress
-3 2 1 suppress
+6 5 1 suppress

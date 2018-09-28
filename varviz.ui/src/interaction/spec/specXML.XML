@@ -1,1 +1,0 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?><system name="name of the system"><specification type="1."/><specification type="3."/><specification type="Forbid"><require from="weight" to="twothirdsfull"><var name="Elevator$DoorState Elevator.doors"/></require></specification></system>
