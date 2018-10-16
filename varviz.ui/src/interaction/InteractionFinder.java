@@ -62,7 +62,7 @@ public class InteractionFinder {
 	}
 	
 	public void findInteractions(File workingDir){
-		//gets all the variables and its context (presence conditions)
+		//gets all the variables and its context (presence conditions): dataVarList (name, expressions)
 		collectVarExpressions();
 		
 		//getting all expressions from data
@@ -87,7 +87,7 @@ public class InteractionFinder {
 
 	public void getImplications(File workingDir, List<VarInteraction> interactionsPerVarList, List<VarInteraction> generalInteractionDataList) {
 		
-		List<FeatureExpr> expressions = new ArrayList<>();		
+		List<FeatureExpr> expressions = new ArrayList<>();		//control + data interactions ???
 		for (Edge edge : this.edges) {
 			FeatureExpr ctx = edge.getCtx();
 			
@@ -101,9 +101,22 @@ public class InteractionFinder {
 			
 		//analyzing all interactions together: control + data exp
 		GeneralDataInteraction generalDataI = new GeneralDataInteraction();
-		List<VarInteraction> generalInteractionALLList = generalDataI.getALLInte(expressions, dataVarList);
-		List<FeatureExpr> allAxpressions = new ArrayList<>();	
-		allAxpressions = generalDataI.getExpressionALL();
+		//List<VarInteraction> generalInteractionALLList = generalDataI.getALLInte(expressions, dataVarList);
+		
+		//create the complete set of expressions (control + data)
+		List<FeatureExpr> allAxpressions = new ArrayList<>();
+		allAxpressions.addAll(expressions);	
+		List<FeatureExpr> listofAVAR;
+		for(DataVar var: dataVarList){		
+			listofAVAR = var.getCtxList();
+			for(FeatureExpr expVar: listofAVAR) {
+				if(!allAxpressions.contains(expVar)) {
+					allAxpressions.add(expVar);
+				}
+			}			
+		}
+//		List<FeatureExpr> allAxpressions = new ArrayList<>();	
+//		allAxpressions = generalDataI.getExpressionALL();
 		
 		ControlflowControl finder = new ControlflowControl();
 		
@@ -122,7 +135,7 @@ public class InteractionFinder {
 		System.out.println(workingDir.getAbsolutePath());
 		
 		//it creates the resulting graph and already removes interactions from spec
-		InteractionCreator resultingGraph = new InteractionCreator(hashMap, finder.getFeatures(), finder.getNoEffectlist(), expressions,
+		InteractionCreator resultingGraph = new InteractionCreator(hashMap, finder.getFeatures(), finder.getNoEffectlist(), allAxpressions,
 				interactionsPerVarList, specList);
 		ArrayList<Interaction> finalList = resultingGraph.getInteractionsToShow();
 		ArrayList<Interaction> typeTOTALinteractionsList = resultingGraph.getInteractionsOFtypeTOTAL();//receives interactions that are not partial
@@ -145,10 +158,68 @@ public class InteractionFinder {
 		List<String> edgestoGraphx = file.getEdgestoGraphx();
 		edgestoGraphx = preProcessingEdges(edgestoGraphx); //remove repeated pairs
 		List<String> reducedEdges = file.getEdgestoGraphxREDUCED();//edgestoGraphx without vars of interactions of type total
+		List<String> reducedEdges2 = removeDuplicatedInter(reducedEdges); //the same interaction but vars different, maintain just 1 inter with all vars
 //		createJGraphX(finalString, resultingGraph,edgestoGraphx);
-		createJGraphX(finalString, resultingGraph,reducedEdges);
+		createJGraphX(finalString, resultingGraph,reducedEdges2);
 	}
 	
+
+	private List<String> removeDuplicatedInter(List<String> reducedEdges) {
+		
+		ArrayList<String> listsupport = new ArrayList<>();
+		List<String> newlist = new ArrayList<>();
+		listsupport.addAll(reducedEdges);
+		
+		for(int i=0; i<listsupport.size();i++){
+			
+			if(listsupport.get(i)==null) {
+				i = i+3;
+				continue;
+			}
+			
+			String from = listsupport.get(i);
+			String to = listsupport.get(i+1);
+			String relation = listsupport.get(i+2);
+			String[] vars1 = listsupport.get(i+3).split ("\n");
+			int numberVars = vars1.length;
+			
+			ArrayList<String> vars = new ArrayList<>();
+			for(String v: vars1) {
+				vars.add(v);
+			}
+			
+			
+			for(int j=i+4; j<listsupport.size();j++) {
+				if(from.equals(listsupport.get(j))  && to.equals(listsupport.get(j+1)) && relation.equals(listsupport.get(j+2) )) {
+					String[] varslist = listsupport.get(j+3).split ("\n");
+					for(int a = 0; a<varslist.length; a++) {
+						if(!vars.contains(varslist[a])) {
+							String update = listsupport.get(i+3) + "\n" + varslist[a];
+							listsupport.set(i+3, update);						
+						}
+					}
+					listsupport.set(j, null);
+					listsupport.set(j+1, null);
+					listsupport.set(j+2, null);
+					listsupport.set(j+3, null);
+				}
+				j = j + 3;
+			}
+			i = i+3;
+		}
+		
+		for(int q=0; q<listsupport.size();q++) {
+			if(listsupport.get(q)!=null) {
+				newlist.add(listsupport.get(q));
+			}
+		}
+		return newlist;
+	}
+
+	private boolean listHasElement(List<String> newlist, String from, String to, String relation) {
+		// TODO Auto-generated method stub
+		return false;
+	}
 
 	private List<String> preProcessingEdges(List<String> edgestoGraphx) {
 		List<String> newList = new ArrayList<>(); //Order: F1, F2, relation, variables

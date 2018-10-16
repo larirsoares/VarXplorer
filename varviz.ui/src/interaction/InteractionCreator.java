@@ -67,6 +67,7 @@ public class InteractionCreator {
 				
 				List<String> l = pair.getValue();
 				for(String exp: l){
+					System.out.println("-Interaction: " + exp + " [A: " + A + ", B: " + B + "]");
 					if(exp.contains("not interact")){
 						continue;
 					}
@@ -88,7 +89,7 @@ public class InteractionCreator {
 							continue;
 						}
 						
-						getPerRelation(A, B, pair, exp, "Suppress");
+						getPerRelation(A, B, pair, exp, "Suppress");//creates the interaction including the variables
 						getInteractionsOFtypeTOTAL(A, B, pair, exp, "Suppress");
 					}
 				}		
@@ -102,20 +103,30 @@ public class InteractionCreator {
 		Interaction iinteraction = new Interaction();	
 		interaction.Relationship relation = new interaction.Relationship();
 		
-		for(VarInteraction vars: this.interactionsPerVarList){				
-			if(vars.getExp().contains(A) && vars.getExp().contains(B)){
-				if(!checkSpecVar(pair, vars.getVarName())){
-					relation.setVars(vars.getVarName());
+		
+		//create A to B
+		if(exp.startsWith(A + " ")){									
+			iinteraction.setPair(pair.getKey().getA(), pair.getKey().getB());
+			
+			for(VarInteraction vars: this.interactionsPerVarList){	//getting the variables of the given relation			
+				if( (vars.getExp().contains(A) && vars.getExp().contains(B)) && vars.getExp().startsWith(A)){//if the the relation (ex. suppresion) is formed with A and B
+					if(!checkSpecVar(pair, vars.getVarName())){
+						relation.setVars(vars.getVarName());
+					}
 				}
 			}
-		}
-		//create A to B
-		if(exp.startsWith(A)){									
-			iinteraction.setPair(pair.getKey().getA(), pair.getKey().getB());						
 		}
 		//create B to A
 		else{						
 			iinteraction.setPair(pair.getKey().getB(), pair.getKey().getA());
+			
+			for(VarInteraction vars: this.interactionsPerVarList){				
+				if( (vars.getExp().contains(A) && vars.getExp().contains(B)) && vars.getExp().startsWith(B)){//if the the relation (ex. suppresion) is formed with A and B
+					if(!checkSpecVar(pair, vars.getVarName())){
+						relation.setVars(vars.getVarName());
+					}
+				}
+			}
 		}
 		relation.setRelation(relationType);
 		iinteraction.setRelation(relation);
@@ -276,7 +287,7 @@ public class InteractionCreator {
 		interaction.Relationship relation = new interaction.Relationship();
 		
 		//create A to B
-		if(exp.startsWith(A)){									
+		if(exp.startsWith(A + " ")){									
 			interactionT.setPair(pair.getKey().getA(), pair.getKey().getB());						
 		}
 		//create B to A

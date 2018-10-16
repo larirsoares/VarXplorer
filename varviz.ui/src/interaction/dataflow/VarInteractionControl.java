@@ -24,7 +24,7 @@ public class VarInteractionControl {
 			String name = var.getName();
 			List<FeatureExpr> expressions = var.getCtxList();
 			//List<PairExp> pairs = cflow.getExpressionsPairs(expressions);
-			
+			System.out.println("Interaction for var: " + name); 
 			getRelations(features, expressions, name);
 		}
 		return intList;
