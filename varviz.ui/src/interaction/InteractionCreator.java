@@ -63,7 +63,14 @@ public class InteractionCreator {
 		for (Entry<PairExp, List<String>> pair : hashMap.entrySet()) {					
 			
 				A = Conditional.getCTXString(pair.getKey().getA());
-				B = Conditional.getCTXString(pair.getKey().getB());
+				B = Conditional.getCTXString(pair.getKey().getB());	
+				
+				if(A.equals("User") && B.equals("Activity")) {
+					System.out.println("aqui 1");
+				}
+				if(B.equals("User") && A.equals("Activity")) {
+					System.out.println("aqui 2");
+				}
 				
 				List<String> l = pair.getValue();
 				for(String exp: l){
@@ -137,8 +144,16 @@ public class InteractionCreator {
 
 		int flag = 0;
 		for(VarInteraction vars: this.interactionsPerVarList){
+				String exp111 = vars.getExp();
+			//if(vars.getExp().contains(A) && vars.getExp().contains(B)){
+			
 				
-			if(vars.getExp().contains(A) && vars.getExp().contains(B)){
+			String e1 = Conditional.getCTXString(vars.getPair().getA());
+			String e2 = Conditional.getCTXString(vars.getPair().getB());
+			
+			
+			if( (e1.equals(A) && e2.equals(B)) 
+					|| (e1.equals(B) && e2.equals(A))){
 				flag = 1;
 				//check spec per var
 				if(checkSpecVar(pair, vars.getVarName())){
@@ -150,7 +165,7 @@ public class InteractionCreator {
 				relation.setVars(vars.getVarName());
 				
 				//create A to B
-				if(vars.getExp().startsWith(A)){									
+				if(vars.getExp().startsWith(A+ " ")){									
 					iinteraction.setPair(pair.getKey().getA(), pair.getKey().getB());						
 				}
 				//create B to A

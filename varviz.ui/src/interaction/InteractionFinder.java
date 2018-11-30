@@ -137,6 +137,8 @@ public class InteractionFinder {
 		//it creates the resulting graph and already removes interactions from spec
 		InteractionCreator resultingGraph = new InteractionCreator(hashMap, finder.getFeatures(), finder.getNoEffectlist(), allAxpressions,
 				interactionsPerVarList, specList);
+		
+		int a = 0;
 		ArrayList<Interaction> finalList = resultingGraph.getInteractionsToShow();
 		ArrayList<Interaction> typeTOTALinteractionsList = resultingGraph.getInteractionsOFtypeTOTAL();//receives interactions that are not partial
 		
@@ -160,6 +162,14 @@ public class InteractionFinder {
 		List<String> reducedEdges = file.getEdgestoGraphxREDUCED();//edgestoGraphx without vars of interactions of type total
 		List<String> reducedEdges2 = removeDuplicatedInter(reducedEdges); //the same interaction but vars different, maintain just 1 inter with all vars
 //		createJGraphX(finalString, resultingGraph,edgestoGraphx);
+		
+		System.out.println("");
+		System.out.println("--------Printing reduced");
+		for(int i = 0; i<reducedEdges2.size(); i++) {
+			String s = reducedEdges2.get(i);
+			System.out.println(reducedEdges2.get(i) + " " + reducedEdges2.get(i+1) + " " + reducedEdges2.get(i+2) + " " + reducedEdges2.get(i+3));
+			i = i +3;
+		}
 		createJGraphX(finalString, resultingGraph,reducedEdges2);
 	}
 	
@@ -195,7 +205,8 @@ public class InteractionFinder {
 					for(int a = 0; a<varslist.length; a++) {
 						if(!vars.contains(varslist[a])) {
 							String update = listsupport.get(i+3) + "\n" + varslist[a];
-							listsupport.set(i+3, update);						
+							listsupport.set(i+3, update);	
+							vars.add(varslist[a]);
 						}
 					}
 					listsupport.set(j, null);
@@ -306,7 +317,7 @@ public class InteractionFinder {
 		
 		ClickHandler frame = new ClickHandler(allListGraph, specList);
 		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-		frame.setSize(800, 600);
+		frame.setSize(1200, 800);
 		frame.setVisible(true);	
 		
 	}

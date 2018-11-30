@@ -65,7 +65,8 @@ public class ClickHandler extends JFrame
 	public ClickHandler(List<List> allListGraph, ArrayList<Specification> specList)
 	{
 		super("VarXplorer: dynamic analysis of feature interactions");			
-		this.setSize(800, 600);
+		//this.setSize(1200, 800);
+		//this.preferredSize();
 		this.graphDataList = allListGraph;
 		this.specList = specList;
 		graph.getModel().beginUpdate();
@@ -349,7 +350,16 @@ public class ClickHandler extends JFrame
             	
             	pop.setinfoList(featureVarsList, from, to, optionsTrue);
             	//PopMenu frame = new PopMenu(featureVarsList);                           
-                pop.setLocation(e.getX(), e.getY());
+              
+            	int y = e.getY();
+            	if(e.getY()<400) {
+            		y = 0;
+            	}else {
+            		y = y-400;
+            	}
+            	pop.setLocation(e.getX(), y);
+//            	pop.setLocation(e.getX(), e.getY());
+            	//pop.setLocation(100, 100);
                 pop.setVisible(true);
                 popList.add(pop);
                 
