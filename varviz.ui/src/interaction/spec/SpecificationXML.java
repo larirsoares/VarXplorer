@@ -196,6 +196,7 @@ public class SpecificationXML {
 				String relation = eElement.getFirstChild().getNodeName();//suppress or require
 				String from = eElement.getFirstChild().getAttributes().item(0).getTextContent();
 				String to = eElement.getFirstChild().getAttributes().item(1).getTextContent();
+				System.out.println(specType + " " + relation + " "  +from + " "  + to);
 				String var = eElement.getFirstChild().getFirstChild().getAttributes().item(0).getTextContent();
 				
 				

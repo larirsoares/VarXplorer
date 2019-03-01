@@ -352,9 +352,13 @@ public class ClickHandler extends JFrame
             	//PopMenu frame = new PopMenu(featureVarsList);                           
               
             	int y = e.getY();
+            	System.out.println("----> y : " + y);
             	if(e.getY()<400) {
             		y = 0;
+            	}else if(e.getY()>1000){
+            		y = 600;
             	}else {
+            	
             		y = y-400;
             	}
             	pop.setLocation(e.getX(), y);
